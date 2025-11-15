@@ -251,14 +251,29 @@ npm run db:migrate   # Run database migrations
 
 ## Production Deployment
 
-### Frontend
+### Deploy to Railway (Recommended)
+
+Railway provides the easiest deployment experience with managed PostgreSQL, automatic HTTPS, and simple environment management.
+
+**Quick Start:**
+1. Sign up at [railway.app](https://railway.app)
+2. Connect your GitHub repository
+3. Add PostgreSQL database
+4. Configure environment variables
+5. Deploy!
+
+**📖 Full Railway deployment guide:** See [RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md) for detailed step-by-step instructions.
+
+### Manual Deployment
+
+#### Frontend
 1. Build the frontend:
    ```bash
    npm run build
    ```
 2. Deploy the `dist` folder to your hosting service (Vercel, Netlify, etc.)
 
-### Backend
+#### Backend
 1. Build the backend:
    ```bash
    cd server
