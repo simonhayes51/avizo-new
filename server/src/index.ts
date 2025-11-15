@@ -23,20 +23,32 @@ const allowedOrigins = process.env.CLIENT_URL
   ? process.env.CLIENT_URL.split(',').map(url => url.trim())
   : ['http://localhost:5173', 'http://localhost:5174'];
 
+console.log('🔐 CORS Configuration:');
+console.log('   Allowed origins:', allowedOrigins.join(', '));
+console.log('   CLIENT_URL env:', process.env.CLIENT_URL || 'NOT SET');
+
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, Postman, etc.)
-    if (!origin) return callback(null, true);
+    if (!origin) {
+      console.log('✅ Allowing request with no origin');
+      return callback(null, true);
+    }
 
     if (allowedOrigins.includes(origin)) {
+      console.log(`✅ Allowing origin: ${origin}`);
       callback(null, true);
     } else {
-      console.warn(`CORS blocked origin: ${origin}`);
-      console.warn(`Allowed origins: ${allowedOrigins.join(', ')}`);
+      console.warn(`❌ CORS blocked origin: ${origin}`);
+      console.warn(`   Allowed origins: ${allowedOrigins.join(', ')}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
