@@ -75,9 +75,29 @@ app.use('/api/integrations', integrationsRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/demo', demoRoutes);
 
-// Health check
+// Health checks - both root and /api/health for Railway
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.get('/', (req, res) => {
+  res.json({
+    status: 'Avizo API Server',
+    version: '1.0.0',
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth',
+      clients: '/api/clients',
+      appointments: '/api/appointments',
+      conversations: '/api/conversations',
+      automations: '/api/automations',
+      analytics: '/api/analytics'
+    }
+  });
 });
 
 // Error handler
