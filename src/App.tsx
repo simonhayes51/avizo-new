@@ -39,24 +39,22 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route
-          path="/app/*"
+          path="/app"
           element={
             <ProtectedRoute>
-              <Layout>
-                <Routes>
-                  <Route path="dashboard" element={<Dashboard />} />
-                  <Route path="clients" element={<Clients />} />
-                  <Route path="calendar" element={<CalendarView />} />
-                  <Route path="conversations" element={<Conversations />} />
-                  <Route path="automations" element={<Automations />} />
-                  <Route path="analytics" element={<Analytics />} />
-                  <Route path="settings" element={<Settings />} />
-                  <Route path="*" element={<Navigate to="/app/dashboard" replace />} />
-                </Routes>
-              </Layout>
+              <Layout />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="clients" element={<Clients />} />
+          <Route path="calendar" element={<CalendarView />} />
+          <Route path="conversations" element={<Conversations />} />
+          <Route path="automations" element={<Automations />} />
+          <Route path="analytics" element={<Analytics />} />
+          <Route path="settings" element={<Settings />} />
+          <Route index element={<Navigate to="/app/dashboard" replace />} />
+        </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

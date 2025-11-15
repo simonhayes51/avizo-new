@@ -1,13 +1,8 @@
 import { Calendar, MessageSquare, Zap, Settings, LayoutDashboard, Users, CalendarDays, BarChart3, LogOut } from 'lucide-react';
-import { ReactNode } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, Outlet } from 'react-router-dom';
 import api from '../lib/api';
 
-interface LayoutProps {
-  children: ReactNode;
-}
-
-export default function Layout({ children }: LayoutProps) {
+export default function Layout() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -76,7 +71,7 @@ export default function Layout({ children }: LayoutProps) {
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto">{children}</main>
+      <main className="max-w-7xl mx-auto"><Outlet /></main>
     </div>
   );
 }
