@@ -6,6 +6,18 @@
   Migrated from Supabase to standalone PostgreSQL
 */
 
+-- Drop old tables if they exist (handles migration from Supabase)
+-- Order matters: drop dependent tables first to avoid foreign key constraint errors
+DROP TABLE IF EXISTS automation_logs CASCADE;
+DROP TABLE IF EXISTS automations CASCADE;
+DROP TABLE IF EXISTS integrations CASCADE;
+DROP TABLE IF EXISTS messages CASCADE;
+DROP TABLE IF EXISTS conversations CASCADE;
+DROP TABLE IF EXISTS appointments CASCADE;
+DROP TABLE IF EXISTS clients CASCADE;
+DROP TABLE IF EXISTS profiles CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+
 -- Users table (replaces Supabase auth.users)
 CREATE TABLE IF NOT EXISTS users (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
