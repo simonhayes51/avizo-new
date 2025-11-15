@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Clock, MapPin, User, AlertCircle, Plus } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { Appointment, Client } from '../types';
 
 export default function Dashboard() {
@@ -13,28 +13,24 @@ export default function Dashboard() {
   }, [selectedDate]);
 
   const loadAppointments = async () => {
-    const startOfDay = new Date(selectedDate);
-    startOfDay.setHours(0, 0, 0, 0);
+    try {
+      const startOfDay = new Date(selectedDate);
+      startOfDay.setHours(0, 0, 0, 0);
 
-    const endOfDay = new Date(selectedDate);
-    endOfDay.setHours(23, 59, 59, 999);
+      const endOfDay = new Date(selectedDate);
+      endOfDay.setHours(23, 59, 59, 999);
 
-    const { data, error } = await supabase
-      .from('appointments')
-      .select(`
-        *,
-        client:clients(*)
-      `)
-      .gte('start_time', startOfDay.toISOString())
-      .lte('start_time', endOfDay.toISOString())
-      .order('start_time', { ascending: true });
+      const data = await api.appointments.getAll({
+        date: selectedDate.toISOString().split('T')[0],
+      });
 
-    if (error) {
-      console.error('Error loading appointments:', error);
-    } else {
       setAppointments(data || []);
+    } catch (error) {
+      console.error('Error loading appointments:', error);
+      setAppointments([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const formatTime = (dateString: string) => {

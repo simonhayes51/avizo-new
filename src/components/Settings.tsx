@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Save, Link2, Calendar as CalendarIcon, Phone, Building2 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 
 interface Profile {
   id: string;
@@ -28,27 +28,19 @@ export default function Settings() {
   }, []);
 
   const loadSettings = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    try {
+      const profileData = await api.auth.getProfile();
+      const integrationsData = await api.integrations.getAll();
 
-    if (!user) {
+      setProfile(profileData);
+      setIntegrations(integrationsData || []);
+    } catch (error) {
+      console.error('Error loading settings:', error);
+      setProfile(null);
+      setIntegrations([]);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle();
-
-    const { data: integrationsData } = await supabase
-      .from('integrations')
-      .select('*')
-      .eq('user_id', user.id);
-
-    setProfile(profileData);
-    setIntegrations(integrationsData || []);
-    setLoading(false);
   };
 
   const saveProfile = async () => {
@@ -56,25 +48,21 @@ export default function Settings() {
 
     setSaving(true);
 
-    const { error } = await supabase
-      .from('profiles')
-      .update({
+    try {
+      await api.auth.updateProfile({
         business_name: profile.business_name,
         business_type: profile.business_type,
         phone_number: profile.phone_number,
         timezone: profile.timezone,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', profile.id);
+      });
 
-    setSaving(false);
-
-    if (error) {
+      alert('Settings saved successfully');
+    } catch (error) {
       console.error('Error saving profile:', error);
-      return;
+      alert('Failed to save settings. Please try again.');
+    } finally {
+      setSaving(false);
     }
-
-    alert('Settings saved successfully');
   };
 
   if (loading) {

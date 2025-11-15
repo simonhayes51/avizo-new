@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Send, Search, Phone, ChevronLeft } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { Conversation, Message, Client } from '../types';
 
 export default function Conversations() {
@@ -22,59 +22,43 @@ export default function Conversations() {
   }, [selectedConversation]);
 
   const loadConversations = async () => {
-    const { data, error } = await supabase
-      .from('conversations')
-      .select(`
-        *,
-        client:clients(*)
-      `)
-      .order('last_message_at', { ascending: false });
-
-    if (error) {
-      console.error('Error loading conversations:', error);
-    } else {
+    try {
+      const data = await api.conversations.getAll();
       setConversations(data || []);
+    } catch (error) {
+      console.error('Error loading conversations:', error);
+      setConversations([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const loadMessages = async (conversationId: string) => {
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true });
-
-    if (error) {
-      console.error('Error loading messages:', error);
-    } else {
+    try {
+      const data = await api.conversations.getMessages(conversationId);
       setMessages(data || []);
+    } catch (error) {
+      console.error('Error loading messages:', error);
+      setMessages([]);
     }
   };
 
   const sendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return;
 
-    const { error } = await supabase.from('messages').insert({
-      conversation_id: selectedConversation.id,
-      sender_type: 'business',
-      content: newMessage,
-      message_type: 'sms',
-    });
+    try {
+      await api.conversations.sendMessage(
+        selectedConversation.id,
+        newMessage,
+        'business'
+      );
 
-    if (error) {
+      setNewMessage('');
+      loadMessages(selectedConversation.id);
+      loadConversations();
+    } catch (error) {
       console.error('Error sending message:', error);
-      return;
     }
-
-    await supabase
-      .from('conversations')
-      .update({ last_message_at: new Date().toISOString() })
-      .eq('id', selectedConversation.id);
-
-    setNewMessage('');
-    loadMessages(selectedConversation.id);
-    loadConversations();
   };
 
   const filteredConversations = conversations.filter((conv) => {

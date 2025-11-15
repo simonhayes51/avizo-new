@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, Zap, Edit2, Trash2, ToggleLeft, ToggleRight, Clock } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { Automation } from '../types';
 
 export default function Automations() {
@@ -14,44 +14,35 @@ export default function Automations() {
   }, []);
 
   const loadAutomations = async () => {
-    const { data, error } = await supabase
-      .from('automations')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error loading automations:', error);
-    } else {
+    try {
+      const data = await api.automations.getAll();
       setAutomations(data || []);
+    } catch (error) {
+      console.error('Error loading automations:', error);
+      setAutomations([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const toggleAutomation = async (id: string, isActive: boolean) => {
-    const { error } = await supabase
-      .from('automations')
-      .update({ is_active: !isActive })
-      .eq('id', id);
-
-    if (error) {
+    try {
+      await api.automations.update(id, { is_active: !isActive });
+      loadAutomations();
+    } catch (error) {
       console.error('Error toggling automation:', error);
-      return;
     }
-
-    loadAutomations();
   };
 
   const deleteAutomation = async (id: string) => {
     if (!confirm('Are you sure you want to delete this automation?')) return;
 
-    const { error } = await supabase.from('automations').delete().eq('id', id);
-
-    if (error) {
+    try {
+      await api.automations.delete(id);
+      loadAutomations();
+    } catch (error) {
       console.error('Error deleting automation:', error);
-      return;
     }
-
-    loadAutomations();
   };
 
   if (loading) {
@@ -240,24 +231,18 @@ function AutomationForm({ automation, onClose, onSave }: AutomationFormProps) {
       is_active: true,
     };
 
-    let error;
-    if (automation) {
-      ({ error } = await supabase
-        .from('automations')
-        .update(automationData)
-        .eq('id', automation.id));
-    } else {
-      ({ error } = await supabase.from('automations').insert(automationData));
-    }
-
-    setLoading(false);
-
-    if (error) {
+    try {
+      if (automation) {
+        await api.automations.update(automation.id, automationData);
+      } else {
+        await api.automations.create(automationData);
+      }
+      onSave();
+    } catch (error) {
       console.error('Error saving automation:', error);
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    onSave();
   };
 
   return (
