@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, Zap, Edit2, Trash2, ToggleLeft, ToggleRight, Clock } from 'lucide-react';
-import { api } from '../lib/api';
+import api from '../lib/api';
 import { Automation } from '../types';
 
 export default function Automations() {

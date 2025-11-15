@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Clock, MapPin, User, AlertCircle, Plus } from 'lucide-react';
-import { api } from '../lib/api';
+import api from '../lib/api';
 import { Appointment, Client } from '../types';
 
 export default function Dashboard() {
