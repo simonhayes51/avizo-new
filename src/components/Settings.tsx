@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Save, Link2, Calendar as CalendarIcon, Phone, Building2 } from 'lucide-react';
-import { api } from '../lib/api';
+import api from '../lib/api';
 
 interface Profile {
   id: string;

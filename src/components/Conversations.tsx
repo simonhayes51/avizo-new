@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Send, Search, Phone, ChevronLeft } from 'lucide-react';
-import { api } from '../lib/api';
+import api from '../lib/api';
 import { Conversation, Message, Client } from '../types';
 
 export default function Conversations() {
