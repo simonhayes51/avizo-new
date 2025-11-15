@@ -3,8 +3,11 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 class ApiClient {
   private token: string | null = null;
 
-  constructor() {
-    this.token = localStorage.getItem('auth_token');
+  private getToken(): string | null {
+    if (!this.token) {
+      this.token = localStorage.getItem('auth_token');
+    }
+    return this.token;
   }
 
   private async request(endpoint: string, options: RequestInit = {}) {
@@ -13,8 +16,9 @@ class ApiClient {
       ...options.headers,
     };
 
-    if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
+    const token = this.getToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
 
     const response = await fetch(`${API_URL}${endpoint}`, {
