@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { Calendar, MessageSquare, Zap, Settings, LayoutDashboard, Users, CalendarDays, BarChart3, LogOut } from 'lucide-react';
 import { NavLink, useNavigate, Outlet } from 'react-router-dom';
 import api from '../lib/api';
