@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Send, Search, Phone, ChevronLeft } from 'lucide-react';
+import { Send, Search, Phone, ChevronLeft, Plus, X } from 'lucide-react';
 import api from '../lib/api';
 import { Conversation, Message, Client } from '../types';
 
@@ -10,6 +10,7 @@ export default function Conversations() {
   const [newMessage, setNewMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showNewMessageModal, setShowNewMessageModal] = useState(false);
 
   useEffect(() => {
     loadConversations();
@@ -77,7 +78,17 @@ export default function Conversations() {
   return (
     <div className="h-[calc(100vh-4rem)] flex">
       <div className={`${selectedConversation ? 'hidden lg:flex' : 'flex'} w-full lg:w-96 border-r border-slate-200 flex-col bg-white`}>
-        <div className="p-4 border-b border-slate-200">
+        <div className="p-4 border-b border-slate-200 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-slate-900">Messages</h2>
+            <button
+              onClick={() => setShowNewMessageModal(true)}
+              className="inline-flex items-center px-3 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition text-sm"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              New Message
+            </button>
+          </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
             <input
@@ -92,8 +103,20 @@ export default function Conversations() {
 
         <div className="flex-1 overflow-y-auto">
           {filteredConversations.length === 0 ? (
-            <div className="p-8 text-center text-slate-500">
-              {searchTerm ? 'No conversations found' : 'No conversations yet'}
+            <div className="p-8 text-center">
+              <MessageSquare className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+              <p className="text-slate-500 mb-4">
+                {searchTerm ? 'No conversations found' : 'No conversations yet'}
+              </p>
+              {!searchTerm && (
+                <button
+                  onClick={() => setShowNewMessageModal(true)}
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Start a Conversation
+                </button>
+              )}
             </div>
           ) : (
             filteredConversations.map((conversation) => (
@@ -169,10 +192,206 @@ export default function Conversations() {
           <div className="flex-1 flex items-center justify-center text-slate-500">
             <div className="text-center">
               <MessageSquare className="w-12 h-12 mx-auto mb-3 text-slate-300" />
-              <p>Select a conversation to start messaging</p>
+              <p className="mb-4">Select a conversation to start messaging</p>
+              <button
+                onClick={() => setShowNewMessageModal(true)}
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                New Message
+              </button>
             </div>
           </div>
         )}
+      </div>
+
+      {showNewMessageModal && (
+        <NewMessageModal
+          onClose={() => setShowNewMessageModal(false)}
+          onSuccess={(conversation) => {
+            setShowNewMessageModal(false);
+            setSelectedConversation(conversation);
+            loadConversations();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+interface NewMessageModalProps {
+  onClose: () => void;
+  onSuccess: (conversation: Conversation) => void;
+}
+
+function NewMessageModal({ onClose, onSuccess }: NewMessageModalProps) {
+  const [clients, setClients] = useState<Client[]>([]);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [message, setMessage] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    loadClients();
+  }, []);
+
+  const loadClients = async () => {
+    try {
+      const data = await api.clients.getAll();
+      setClients(data || []);
+    } catch (error) {
+      console.error('Error loading clients:', error);
+      setError('Failed to load clients');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSend = async () => {
+    if (!selectedClient || !message.trim()) return;
+
+    setSending(true);
+    setError('');
+
+    try {
+      // Create or get conversation
+      const conversation = await api.conversations.create(selectedClient.id);
+
+      // Send the message
+      await api.conversations.sendMessage(conversation.id, message, 'business');
+
+      onSuccess(conversation);
+    } catch (err: any) {
+      setError(err.message || 'Failed to send message');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const filteredClients = clients.filter((client) =>
+    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    client.phone_number.includes(searchTerm)
+  );
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl max-w-md w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="p-6 border-b border-slate-200 flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-slate-900">New Message</h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-slate-100 rounded-lg transition"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6">
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+              {error}
+            </div>
+          )}
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Select Client *
+              </label>
+
+              {!selectedClient ? (
+                <>
+                  <div className="relative mb-3">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Search clients..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-lg">
+                    {loading ? (
+                      <div className="p-4 text-center text-slate-500">Loading clients...</div>
+                    ) : filteredClients.length === 0 ? (
+                      <div className="p-4 text-center text-slate-500">
+                        {searchTerm ? 'No clients found' : 'No clients yet. Add a client first.'}
+                      </div>
+                    ) : (
+                      filteredClients.map((client) => (
+                        <button
+                          key={client.id}
+                          onClick={() => setSelectedClient(client)}
+                          className="w-full p-3 flex items-center space-x-3 hover:bg-slate-50 transition border-b border-slate-100 last:border-0"
+                        >
+                          <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
+                            {client.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="flex-1 text-left">
+                            <p className="font-medium text-slate-900">{client.name}</p>
+                            <p className="text-sm text-slate-500">{client.phone_number}</p>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center space-x-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
+                    {selectedClient.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-slate-900">{selectedClient.name}</p>
+                    <p className="text-sm text-slate-500">{selectedClient.phone_number}</p>
+                  </div>
+                  <button
+                    onClick={() => setSelectedClient(null)}
+                    className="p-1 hover:bg-blue-100 rounded transition"
+                  >
+                    <X className="w-4 h-4 text-slate-600" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {selectedClient && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Message *
+                </label>
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Type your message here..."
+                  rows={6}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="p-6 border-t border-slate-200 flex gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 px-6 py-3 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSend}
+            disabled={!selectedClient || !message.trim() || sending}
+            className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {sending ? 'Sending...' : 'Send Message'}
+          </button>
+        </div>
       </div>
     </div>
   );
