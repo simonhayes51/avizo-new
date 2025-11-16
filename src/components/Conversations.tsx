@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Send, Search, Phone, ChevronLeft, Plus, X } from 'lucide-react';
+import { Send, Search, Phone, ChevronLeft, Plus, X, MessageSquare as MessageIcon, Zap, Smile } from 'lucide-react';
 import api from '../lib/api';
 import { Conversation, Message, Client } from '../types';
 
@@ -11,6 +11,26 @@ export default function Conversations() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [showNewMessageModal, setShowNewMessageModal] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [showQuickReplies, setShowQuickReplies] = useState(false);
+
+  // Message templates
+  const messageTemplates = [
+    { id: 1, name: 'Appointment Confirmation', message: 'Hi! This is to confirm your appointment on {date} at {time}. Please reply to confirm or let us know if you need to reschedule.' },
+    { id: 2, name: 'Appointment Reminder', message: 'Reminder: You have an appointment tomorrow at {time}. Looking forward to seeing you!' },
+    { id: 3, name: 'Thank You', message: 'Thank you for choosing our service! We appreciate your business and look forward to serving you again.' },
+    { id: 4, name: 'Follow Up', message: 'Hi! Just following up to see if you have any questions or if there\'s anything else we can help you with.' },
+    { id: 5, name: 'Cancellation', message: 'We understand you need to cancel your appointment. Please let us know when you\'d like to reschedule.' },
+  ];
+
+  const quickReplies = [
+    'Thank you!',
+    'Sounds good',
+    'Will get back to you shortly',
+    'Confirmed',
+    'Yes, that works',
+    'See you then',
+  ];
 
   useEffect(() => {
     loadConversations();
@@ -163,7 +183,87 @@ export default function Conversations() {
             </div>
 
             <div className="bg-white border-t border-slate-200 p-4">
+              {/* Quick Replies */}
+              {showQuickReplies && (
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {quickReplies.map((reply, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        setNewMessage(reply);
+                        setShowQuickReplies(false);
+                      }}
+                      className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm hover:bg-blue-200 transition"
+                    >
+                      {reply}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Templates */}
+              {showTemplates && (
+                <div className="mb-3 bg-slate-50 border border-slate-200 rounded-lg p-3 max-h-64 overflow-y-auto">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-semibold text-slate-900 text-sm">Message Templates</h3>
+                    <button
+                      onClick={() => setShowTemplates(false)}
+                      className="text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {messageTemplates.map((template) => (
+                      <button
+                        key={template.id}
+                        onClick={() => {
+                          setNewMessage(template.message);
+                          setShowTemplates(false);
+                        }}
+                        className="w-full text-left p-3 bg-white border border-slate-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition group"
+                      >
+                        <h4 className="font-medium text-slate-900 text-sm mb-1 group-hover:text-blue-700">
+                          {template.name}
+                        </h4>
+                        <p className="text-xs text-slate-600 line-clamp-2">{template.message}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-end space-x-2">
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => {
+                      setShowQuickReplies(!showQuickReplies);
+                      setShowTemplates(false);
+                    }}
+                    className={`p-2 rounded-lg transition ${
+                      showQuickReplies
+                        ? 'bg-blue-100 text-blue-600'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                    title="Quick Replies"
+                  >
+                    <Zap className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowTemplates(!showTemplates);
+                      setShowQuickReplies(false);
+                    }}
+                    className={`p-2 rounded-lg transition ${
+                      showTemplates
+                        ? 'bg-blue-100 text-blue-600'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                    title="Templates"
+                  >
+                    <MessageIcon className="w-5 h-5" />
+                  </button>
+                </div>
                 <textarea
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
@@ -180,12 +280,14 @@ export default function Conversations() {
                 <button
                   onClick={sendMessage}
                   disabled={!newMessage.trim()}
-                  className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="p-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition"
                 >
                   <Send className="w-5 h-5" />
                 </button>
               </div>
-              <p className="text-xs text-slate-500 mt-2">Press Enter to send, Shift+Enter for new line</p>
+              <p className="text-xs text-slate-500 mt-2">
+                Press Enter to send, Shift+Enter for new line. Use templates and quick replies for faster responses.
+              </p>
             </div>
           </>
         ) : (
@@ -439,15 +541,17 @@ function MessageBubble({ message }: { message: Message }) {
   const isFromBusiness = message.sender_type === 'business';
 
   return (
-    <div className={`flex ${isFromBusiness ? 'justify-end' : 'justify-start'}`}>
+    <div className={`flex ${isFromBusiness ? 'justify-end' : 'justify-start'} animate-fade-in`}>
       <div
-        className={`max-w-xs lg:max-w-md xl:max-w-lg px-4 py-2 rounded-lg ${
-          isFromBusiness ? 'bg-blue-600 text-white' : 'bg-white text-slate-900 border border-slate-200'
+        className={`max-w-xs lg:max-w-md xl:max-w-lg px-4 py-3 rounded-2xl shadow-sm ${
+          isFromBusiness
+            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
+            : 'bg-white text-slate-900 border border-slate-200'
         }`}
       >
-        <p className="whitespace-pre-wrap break-words">{message.content}</p>
+        <p className="whitespace-pre-wrap break-words leading-relaxed">{message.content}</p>
         <p
-          className={`text-xs mt-1 ${
+          className={`text-xs mt-1.5 ${
             isFromBusiness ? 'text-blue-100' : 'text-slate-500'
           }`}
         >
