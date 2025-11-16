@@ -271,6 +271,68 @@ class ApiClient {
     },
   };
 
+  // Integration Credentials Management
+  integrationCredentials = {
+    // Save credentials
+    saveWhatsApp: async (data: any) => {
+      return this.request('/integration-credentials/whatsapp', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+
+    saveTwilio: async (data: any) => {
+      return this.request('/integration-credentials/twilio', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+
+    saveStripe: async (data: any) => {
+      return this.request('/integration-credentials/stripe', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+
+    saveEmail: async (data: any) => {
+      return this.request('/integration-credentials/email', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+
+    // Get credentials (masked)
+    get: async (provider: string) => {
+      return this.request(`/integration-credentials/${provider}`);
+    },
+
+    // Test connections
+    testWhatsApp: async () => {
+      return this.request('/integration-credentials/whatsapp/test', {
+        method: 'POST',
+      });
+    },
+
+    testTwilio: async () => {
+      return this.request('/integration-credentials/twilio/test', {
+        method: 'POST',
+      });
+    },
+
+    testStripe: async () => {
+      return this.request('/integration-credentials/stripe/test', {
+        method: 'POST',
+      });
+    },
+
+    testEmail: async () => {
+      return this.request('/integration-credentials/email/test', {
+        method: 'POST',
+      });
+    },
+  };
+
   // Payments
   payments = {
     getAll: async () => {
