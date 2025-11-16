@@ -2,26 +2,30 @@ import twilio from 'twilio';
 import { Pool } from 'pg';
 
 export class TwilioService {
-  private client: twilio.Twilio;
+  private client: twilio.Twilio | null = null;
   private phoneNumber: string;
   private db: Pool;
 
-  constructor(db: Pool) {
-    const accountSid = process.env.TWILIO_ACCOUNT_SID;
-    const authToken = process.env.TWILIO_AUTH_TOKEN;
-    this.phoneNumber = process.env.TWILIO_PHONE_NUMBER || '';
-
-    if (!accountSid || !authToken) {
-      throw new Error('Twilio credentials not configured');
-    }
-
-    this.client = twilio(accountSid, authToken);
+  constructor(db: Pool, accountSid?: string, authToken?: string, phoneNumber?: string) {
     this.db = db;
+    this.phoneNumber = phoneNumber || '';
+
+    // Initialize with provided credentials (either from env or database)
+    if (accountSid && authToken) {
+      this.client = twilio(accountSid, authToken);
+    }
+  }
+
+  private ensureInitialized() {
+    if (!this.client) {
+      throw new Error('Twilio not initialized. Please provide credentials.');
+    }
   }
 
   async sendSMS(to: string, text: string): Promise<any> {
+    this.ensureInitialized();
     try {
-      const message = await this.client.messages.create({
+      const message = await this.client!.messages.create({
         body: text,
         from: this.phoneNumber,
         to: to
