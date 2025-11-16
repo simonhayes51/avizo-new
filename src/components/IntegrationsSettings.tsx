@@ -1,11 +1,79 @@
 import { useState, useEffect } from 'react';
-import { Check, X, Loader2, ExternalLink } from 'lucide-react';
+import { Check, X, Loader2, ExternalLink, ChevronDown, ChevronUp, HelpCircle, AlertCircle, CheckCircle } from 'lucide-react';
 import api from '../lib/api';
+
+// Help section component
+function HelpSection({ title, children, defaultOpen = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <div className="mt-4 border border-blue-200 rounded-lg bg-blue-50">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-blue-100 rounded-lg transition-colors"
+      >
+        <span className="flex items-center gap-2 text-sm font-medium text-blue-900">
+          <HelpCircle className="h-4 w-4" />
+          {title}
+        </span>
+        {isOpen ? <ChevronUp className="h-4 w-4 text-blue-700" /> : <ChevronDown className="h-4 w-4 text-blue-700" />}
+      </button>
+      {isOpen && (
+        <div className="px-4 pb-4 text-sm text-blue-800 space-y-2">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Tooltip component
+function Tooltip({ text }: { text: string }) {
+  const [show, setShow] = useState(false);
+
+  return (
+    <div className="relative inline-block">
+      <button
+        type="button"
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+        className="text-gray-400 hover:text-gray-600 ml-1"
+      >
+        <HelpCircle className="h-4 w-4" />
+      </button>
+      {show && (
+        <div className="absolute z-10 w-64 p-2 bg-gray-900 text-white text-xs rounded shadow-lg -top-2 left-6">
+          {text}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Status badge component
+function StatusBadge({ configured }: { configured: boolean }) {
+  if (configured) {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+        <CheckCircle className="h-3 w-3" />
+        Connected
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+      <AlertCircle className="h-3 w-3" />
+      Not Connected
+    </span>
+  );
+}
 
 export default function IntegrationsSettings() {
   const [activeTab, setActiveTab] = useState('messaging');
   const [loading, setLoading] = useState(false);
   const [testResults, setTestResults] = useState<{ [key: string]: any }>({});
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   // WhatsApp state
   const [whatsappConfig, setWhatsappConfig] = useState({
@@ -48,7 +116,6 @@ export default function IntegrationsSettings() {
 
   const loadIntegrationStatus = async () => {
     try {
-      // Check which integrations are configured
       const [whatsapp, twilio, stripe, email] = await Promise.all([
         api.integrationCredentials.get('whatsapp').catch(() => ({ configured: false })),
         api.integrationCredentials.get('twilio').catch(() => ({ configured: false })),
@@ -65,14 +132,25 @@ export default function IntegrationsSettings() {
     }
   };
 
+  const showSuccess = (message: string) => {
+    setSuccessMessage(message);
+    setErrorMessage('');
+    setTimeout(() => setSuccessMessage(''), 5000);
+  };
+
+  const showError = (message: string) => {
+    setErrorMessage(message);
+    setSuccessMessage('');
+  };
+
   const handleSaveWhatsApp = async () => {
     try {
       setLoading(true);
       await api.integrationCredentials.saveWhatsApp(whatsappConfig);
       setWhatsappConfigured(true);
-      alert('WhatsApp credentials saved successfully!');
+      showSuccess('WhatsApp connected successfully! You can now send and receive WhatsApp messages.');
     } catch (error: any) {
-      alert('Error saving WhatsApp credentials: ' + error.message);
+      showError('Could not save WhatsApp settings: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -84,12 +162,12 @@ export default function IntegrationsSettings() {
       const result = await api.integrationCredentials.testWhatsApp();
       setTestResults({ ...testResults, whatsapp: result });
       if (result.success) {
-        alert('WhatsApp connection successful!');
+        showSuccess('WhatsApp is working correctly!');
       } else {
-        alert('WhatsApp connection failed: ' + result.error);
+        showError('WhatsApp test failed: ' + result.error);
       }
     } catch (error: any) {
-      alert('Error testing WhatsApp: ' + error.message);
+      showError('Could not test WhatsApp: ' + error.message);
       setTestResults({ ...testResults, whatsapp: { success: false, error: error.message } });
     } finally {
       setLoading(false);
@@ -101,9 +179,9 @@ export default function IntegrationsSettings() {
       setLoading(true);
       await api.integrationCredentials.saveTwilio(twilioConfig);
       setTwilioConfigured(true);
-      alert('Twilio credentials saved successfully!');
+      showSuccess('SMS connected successfully! You can now send and receive text messages.');
     } catch (error: any) {
-      alert('Error saving Twilio credentials: ' + error.message);
+      showError('Could not save SMS settings: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -115,12 +193,12 @@ export default function IntegrationsSettings() {
       const result = await api.integrationCredentials.testTwilio();
       setTestResults({ ...testResults, twilio: result });
       if (result.success) {
-        alert('Twilio connection successful!');
+        showSuccess('SMS is working correctly!');
       } else {
-        alert('Twilio connection failed: ' + result.error);
+        showError('SMS test failed: ' + result.error);
       }
     } catch (error: any) {
-      alert('Error testing Twilio: ' + error.message);
+      showError('Could not test SMS: ' + error.message);
       setTestResults({ ...testResults, twilio: { success: false, error: error.message } });
     } finally {
       setLoading(false);
@@ -132,9 +210,9 @@ export default function IntegrationsSettings() {
       setLoading(true);
       await api.integrationCredentials.saveStripe(stripeConfig);
       setStripeConfigured(true);
-      alert('Stripe credentials saved successfully!');
+      showSuccess('Payment system connected successfully! You can now accept payments.');
     } catch (error: any) {
-      alert('Error saving Stripe credentials: ' + error.message);
+      showError('Could not save payment settings: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -146,12 +224,12 @@ export default function IntegrationsSettings() {
       const result = await api.integrationCredentials.testStripe();
       setTestResults({ ...testResults, stripe: result });
       if (result.success) {
-        alert('Stripe connection successful!');
+        showSuccess('Payment system is working correctly!');
       } else {
-        alert('Stripe connection failed: ' + result.error);
+        showError('Payment test failed: ' + result.error);
       }
     } catch (error: any) {
-      alert('Error testing Stripe: ' + error.message);
+      showError('Could not test payments: ' + error.message);
       setTestResults({ ...testResults, stripe: { success: false, error: error.message } });
     } finally {
       setLoading(false);
@@ -163,9 +241,9 @@ export default function IntegrationsSettings() {
       setLoading(true);
       await api.integrationCredentials.saveEmail(emailConfig);
       setEmailConfigured(true);
-      alert('Email credentials saved successfully!');
+      showSuccess('Email connected successfully! You can now send email notifications.');
     } catch (error: any) {
-      alert('Error saving email credentials: ' + error.message);
+      showError('Could not save email settings: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -177,12 +255,12 @@ export default function IntegrationsSettings() {
       const result = await api.integrationCredentials.testEmail();
       setTestResults({ ...testResults, email: result });
       if (result.success) {
-        alert('Email connection successful!');
+        showSuccess('Email is working correctly!');
       } else {
-        alert('Email connection failed: ' + result.error);
+        showError('Email test failed: ' + result.error);
       }
     } catch (error: any) {
-      alert('Error testing email: ' + error.message);
+      showError('Could not test email: ' + error.message);
       setTestResults({ ...testResults, email: { success: false, error: error.message } });
     } finally {
       setLoading(false);
@@ -194,7 +272,7 @@ export default function IntegrationsSettings() {
       const { url } = await api.integrations.googleAuth();
       window.location.href = url;
     } catch (error: any) {
-      alert('Error connecting to Google: ' + error.message);
+      showError('Could not connect to Google: ' + error.message);
     }
   };
 
@@ -203,7 +281,7 @@ export default function IntegrationsSettings() {
       const { url } = await api.integrations.microsoftAuth();
       window.location.href = url;
     } catch (error: any) {
-      alert('Error connecting to Microsoft: ' + error.message);
+      showError('Could not connect to Microsoft: ' + error.message);
     }
   };
 
@@ -212,18 +290,41 @@ export default function IntegrationsSettings() {
       const { url } = await api.integrations.zoomAuth();
       window.location.href = url;
     } catch (error: any) {
-      alert('Error connecting to Zoom: ' + error.message);
+      showError('Could not connect to Zoom: ' + error.message);
     }
   };
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Integrations</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Connect Your Business Tools</h2>
         <p className="mt-1 text-sm text-gray-500">
-          Connect your business tools to automate messaging, calendars, and payments
+          Set up integrations to automate messaging, sync calendars, and accept payments. Don't worry - we'll guide you through each step!
         </p>
       </div>
+
+      {/* Success/Error Messages */}
+      {successMessage && (
+        <div className="rounded-md bg-green-50 p-4 border border-green-200">
+          <div className="flex">
+            <CheckCircle className="h-5 w-5 text-green-400" />
+            <div className="ml-3">
+              <p className="text-sm font-medium text-green-800">{successMessage}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="rounded-md bg-red-50 p-4 border border-red-200">
+          <div className="flex">
+            <AlertCircle className="h-5 w-5 text-red-400" />
+            <div className="ml-3">
+              <p className="text-sm font-medium text-red-800">{errorMessage}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="border-b border-gray-200">
@@ -236,7 +337,7 @@ export default function IntegrationsSettings() {
                 : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
             } whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium`}
           >
-            Messaging
+            📱 Messaging
           </button>
           <button
             onClick={() => setActiveTab('calendar')}
@@ -246,7 +347,7 @@ export default function IntegrationsSettings() {
                 : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
             } whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium`}
           >
-            Calendar
+            📅 Calendar
           </button>
           <button
             onClick={() => setActiveTab('payments')}
@@ -256,7 +357,7 @@ export default function IntegrationsSettings() {
                 : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
             } whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium`}
           >
-            Payments
+            💳 Payments
           </button>
           <button
             onClick={() => setActiveTab('video')}
@@ -266,7 +367,7 @@ export default function IntegrationsSettings() {
                 : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
             } whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium`}
           >
-            Video Calling
+            🎥 Video Calls
           </button>
           <button
             onClick={() => setActiveTab('email')}
@@ -276,7 +377,7 @@ export default function IntegrationsSettings() {
                 : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
             } whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium`}
           >
-            Email
+            ✉️ Email
           </button>
         </nav>
       </div>
@@ -285,32 +386,44 @@ export default function IntegrationsSettings() {
       {activeTab === 'messaging' && (
         <div className="space-y-8">
           {/* WhatsApp */}
-          <div className="bg-white shadow sm:rounded-lg">
+          <div className="bg-white shadow sm:rounded-lg border border-gray-200">
             <div className="px-4 py-5 sm:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-medium leading-6 text-gray-900 flex items-center gap-2">
-                    WhatsApp Business
-                    {whatsappConfigured && <Check className="h-5 w-5 text-green-500" />}
-                  </h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Send and receive WhatsApp messages from your clients
-                  </p>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="text-3xl">💬</div>
+                  <div>
+                    <h3 className="text-lg font-medium leading-6 text-gray-900">
+                      WhatsApp Business
+                    </h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                      Chat with your clients on WhatsApp
+                    </p>
+                  </div>
                 </div>
-                <a
-                  href="https://developers.facebook.com/docs/whatsapp/getting-started"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-indigo-600 hover:text-indigo-500"
-                >
-                  <ExternalLink className="h-5 w-5" />
-                </a>
+                <StatusBadge configured={whatsappConfigured} />
               </div>
 
-              <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <HelpSection title="How do I set up WhatsApp?" defaultOpen={!whatsappConfigured}>
+                <div className="space-y-3">
+                  <p className="font-medium">Follow these simple steps:</p>
+                  <ol className="list-decimal list-inside space-y-2 ml-2">
+                    <li>Go to <a href="https://business.facebook.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Facebook Business Manager</a></li>
+                    <li>Click on "WhatsApp Accounts" in the left menu</li>
+                    <li>Select your WhatsApp Business account</li>
+                    <li>Go to "API Setup" or "Settings"</li>
+                    <li>Copy the information below and paste it into the fields</li>
+                  </ol>
+                  <p className="text-xs mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                    💡 <strong>Tip:</strong> You'll need a Facebook Business account to use WhatsApp Business API. It's free to set up!
+                  </p>
+                </div>
+              </HelpSection>
+
+              <div className="mt-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Phone Number ID
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Your WhatsApp Business Phone Number ID
+                    <Tooltip text="This is a unique number that identifies your WhatsApp business phone. You'll find it in your Facebook Business Manager under WhatsApp Settings." />
                   </label>
                   <input
                     type="text"
@@ -318,14 +431,15 @@ export default function IntegrationsSettings() {
                     onChange={(e) =>
                       setWhatsappConfig({ ...whatsappConfig, phoneNumberId: e.target.value })
                     }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    placeholder="Enter Phone Number ID"
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    placeholder="e.g., 123456789012345"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Business Account ID
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Your Business Account ID
+                    <Tooltip text="This identifies your business in Facebook's system. You can find this in Facebook Business Manager settings." />
                   </label>
                   <input
                     type="text"
@@ -333,14 +447,15 @@ export default function IntegrationsSettings() {
                     onChange={(e) =>
                       setWhatsappConfig({ ...whatsappConfig, businessAccountId: e.target.value })
                     }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    placeholder="Enter Business Account ID"
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    placeholder="e.g., 987654321098765"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Access Token
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Access Token (like a password)
+                    <Tooltip text="This is a special code that lets our system send messages on your behalf. Keep it secret! Find it in WhatsApp API Settings." />
                   </label>
                   <input
                     type="password"
@@ -348,14 +463,15 @@ export default function IntegrationsSettings() {
                     onChange={(e) =>
                       setWhatsappConfig({ ...whatsappConfig, accessToken: e.target.value })
                     }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    placeholder="Enter Access Token"
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    placeholder="Paste your access token here"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Verify Token (for webhooks)
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Verify Token (you can make this up)
+                    <Tooltip text="This is a secret word you create to verify WhatsApp webhooks. Choose something only you know, like a random password." />
                   </label>
                   <input
                     type="text"
@@ -363,20 +479,20 @@ export default function IntegrationsSettings() {
                     onChange={(e) =>
                       setWhatsappConfig({ ...whatsappConfig, verifyToken: e.target.value })
                     }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    placeholder="Enter Verify Token"
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    placeholder="e.g., my_secret_token_123"
                   />
                 </div>
               </div>
 
-              <div className="mt-5 flex gap-3">
+              <div className="mt-6 flex gap-3">
                 <button
                   onClick={handleSaveWhatsApp}
                   disabled={loading}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-                  Save Credentials
+                  {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}
+                  Save WhatsApp Settings
                 </button>
 
                 {whatsappConfigured && (
@@ -393,32 +509,44 @@ export default function IntegrationsSettings() {
           </div>
 
           {/* Twilio SMS */}
-          <div className="bg-white shadow sm:rounded-lg">
+          <div className="bg-white shadow sm:rounded-lg border border-gray-200">
             <div className="px-4 py-5 sm:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-medium leading-6 text-gray-900 flex items-center gap-2">
-                    Twilio SMS
-                    {twilioConfigured && <Check className="h-5 w-5 text-green-500" />}
-                  </h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Send and receive SMS messages via Twilio
-                  </p>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="text-3xl">📲</div>
+                  <div>
+                    <h3 className="text-lg font-medium leading-6 text-gray-900">
+                      Text Messages (SMS)
+                    </h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                      Send and receive regular text messages
+                    </p>
+                  </div>
                 </div>
-                <a
-                  href="https://www.twilio.com/docs/sms"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-indigo-600 hover:text-indigo-500"
-                >
-                  <ExternalLink className="h-5 w-5" />
-                </a>
+                <StatusBadge configured={twilioConfigured} />
               </div>
 
-              <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <HelpSection title="How do I set up text messaging?" defaultOpen={!twilioConfigured}>
+                <div className="space-y-3">
+                  <p className="font-medium">Follow these simple steps:</p>
+                  <ol className="list-decimal list-inside space-y-2 ml-2">
+                    <li>Sign up for free at <a href="https://www.twilio.com/try-twilio" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Twilio.com</a></li>
+                    <li>After signing in, go to your <a href="https://console.twilio.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Twilio Console</a></li>
+                    <li>You'll see your Account SID and Auth Token right on the homepage</li>
+                    <li>Get a phone number by clicking "Get a Trial Number" or buying a number</li>
+                    <li>Copy and paste the information below</li>
+                  </ol>
+                  <p className="text-xs mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                    💡 <strong>Tip:</strong> Twilio gives you a free trial with credit to test. You can upgrade later when you're ready!
+                  </p>
+                </div>
+              </HelpSection>
+
+              <div className="mt-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Account SID
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Account SID (your account number)
+                    <Tooltip text="This identifies your Twilio account. You'll see it on your Twilio dashboard homepage. It starts with 'AC'." />
                   </label>
                   <input
                     type="text"
@@ -426,14 +554,15 @@ export default function IntegrationsSettings() {
                     onChange={(e) =>
                       setTwilioConfig({ ...twilioConfig, accountSid: e.target.value })
                     }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    placeholder="Enter Account SID"
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    placeholder="Starts with AC..."
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Auth Token
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Auth Token (your password)
+                    <Tooltip text="This is like your Twilio password. Keep it secret! You'll find it on your Twilio dashboard, sometimes hidden - click to reveal it." />
                   </label>
                   <input
                     type="password"
@@ -441,14 +570,15 @@ export default function IntegrationsSettings() {
                     onChange={(e) =>
                       setTwilioConfig({ ...twilioConfig, authToken: e.target.value })
                     }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    placeholder="Enter Auth Token"
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    placeholder="Paste your auth token here"
                   />
                 </div>
 
-                <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Phone Number
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Your Twilio Phone Number
+                    <Tooltip text="This is the phone number you got from Twilio that will send messages. Include the country code, e.g., +1 for US." />
                   </label>
                   <input
                     type="tel"
@@ -456,20 +586,20 @@ export default function IntegrationsSettings() {
                     onChange={(e) =>
                       setTwilioConfig({ ...twilioConfig, phoneNumber: e.target.value })
                     }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     placeholder="+1234567890"
                   />
                 </div>
               </div>
 
-              <div className="mt-5 flex gap-3">
+              <div className="mt-6 flex gap-3">
                 <button
                   onClick={handleSaveTwilio}
                   disabled={loading}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-                  Save Credentials
+                  {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}
+                  Save SMS Settings
                 </button>
 
                 {twilioConfigured && (
@@ -490,31 +620,71 @@ export default function IntegrationsSettings() {
       {/* Calendar Tab */}
       {activeTab === 'calendar' && (
         <div className="space-y-6">
-          <div className="bg-white shadow sm:rounded-lg">
+          <div className="bg-white shadow sm:rounded-lg border border-gray-200">
             <div className="px-4 py-5 sm:p-6">
-              <h3 className="text-lg font-medium leading-6 text-gray-900">Google Calendar</h3>
-              <p className="mt-2 text-sm text-gray-500">
-                Sync your appointments with Google Calendar
-              </p>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="text-3xl">📅</div>
+                <div>
+                  <h3 className="text-lg font-medium leading-6 text-gray-900">Google Calendar</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Automatically sync appointments with your Google Calendar
+                  </p>
+                </div>
+              </div>
+
+              <HelpSection title="What does this do?" defaultOpen>
+                <p>When you connect Google Calendar:</p>
+                <ul className="list-disc list-inside space-y-1 ml-2 mt-2">
+                  <li>New appointments will automatically appear in your Google Calendar</li>
+                  <li>Changes to appointments will sync both ways</li>
+                  <li>You'll see your schedule across all your devices</li>
+                  <li>No need to manually add appointments - it's automatic!</li>
+                </ul>
+                <p className="text-xs mt-3 p-2 bg-green-50 border border-green-200 rounded">
+                  ✨ <strong>Super easy:</strong> Just click the button below and sign in with your Google account. That's it!
+                </p>
+              </HelpSection>
+
               <button
                 onClick={handleConnectGoogle}
-                className="mt-5 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="mt-5 inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
+                <ExternalLink className="h-4 w-4 mr-2" />
                 Connect Google Calendar
               </button>
             </div>
           </div>
 
-          <div className="bg-white shadow sm:rounded-lg">
+          <div className="bg-white shadow sm:rounded-lg border border-gray-200">
             <div className="px-4 py-5 sm:p-6">
-              <h3 className="text-lg font-medium leading-6 text-gray-900">Outlook Calendar</h3>
-              <p className="mt-2 text-sm text-gray-500">
-                Sync your appointments with Outlook/Microsoft Calendar
-              </p>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="text-3xl">📆</div>
+                <div>
+                  <h3 className="text-lg font-medium leading-6 text-gray-900">Outlook Calendar</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Automatically sync appointments with your Outlook/Microsoft Calendar
+                  </p>
+                </div>
+              </div>
+
+              <HelpSection title="What does this do?" defaultOpen>
+                <p>When you connect Outlook Calendar:</p>
+                <ul className="list-disc list-inside space-y-1 ml-2 mt-2">
+                  <li>New appointments will automatically appear in your Outlook Calendar</li>
+                  <li>Works with Outlook.com, Office 365, and Microsoft 365</li>
+                  <li>Changes sync automatically - no manual updates needed</li>
+                  <li>Perfect if you use Microsoft products for work</li>
+                </ul>
+                <p className="text-xs mt-3 p-2 bg-green-50 border border-green-200 rounded">
+                  ✨ <strong>Super easy:</strong> Just click the button below and sign in with your Microsoft account!
+                </p>
+              </HelpSection>
+
               <button
                 onClick={handleConnectMicrosoft}
-                className="mt-5 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="mt-5 inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
+                <ExternalLink className="h-4 w-4 mr-2" />
                 Connect Outlook Calendar
               </button>
             </div>
@@ -524,32 +694,44 @@ export default function IntegrationsSettings() {
 
       {/* Payments Tab */}
       {activeTab === 'payments' && (
-        <div className="bg-white shadow sm:rounded-lg">
+        <div className="bg-white shadow sm:rounded-lg border border-gray-200">
           <div className="px-4 py-5 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-medium leading-6 text-gray-900 flex items-center gap-2">
-                  Stripe Payments
-                  {stripeConfigured && <Check className="h-5 w-5 text-green-500" />}
-                </h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Accept payments from your clients
-                </p>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="text-3xl">💳</div>
+                <div>
+                  <h3 className="text-lg font-medium leading-6 text-gray-900">
+                    Accept Card Payments
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Get paid by credit card, debit card, or Apple Pay
+                  </p>
+                </div>
               </div>
-              <a
-                href="https://stripe.com/docs"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-indigo-600 hover:text-indigo-500"
-              >
-                <ExternalLink className="h-5 w-5" />
-              </a>
+              <StatusBadge configured={stripeConfigured} />
             </div>
 
-            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <HelpSection title="How do I set up payments?" defaultOpen={!stripeConfigured}>
+              <div className="space-y-3">
+                <p className="font-medium">Follow these simple steps:</p>
+                <ol className="list-decimal list-inside space-y-2 ml-2">
+                  <li>Create a free account at <a href="https://dashboard.stripe.com/register" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Stripe.com</a></li>
+                  <li>After signing in, go to <a href="https://dashboard.stripe.com/test/apikeys" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Developers → API Keys</a></li>
+                  <li>You'll see two keys: "Publishable key" and "Secret key"</li>
+                  <li>Copy both keys and paste them below</li>
+                  <li>For webhooks, go to Developers → Webhooks and create an endpoint</li>
+                </ol>
+                <p className="text-xs mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                  💡 <strong>Tip:</strong> Start with "Test mode" to try it out without real money. Switch to "Live mode" when you're ready!
+                </p>
+              </div>
+            </HelpSection>
+
+            <div className="mt-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Secret Key
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Secret Key (keep this private!)
+                  <Tooltip text="This is like your master password for Stripe. NEVER share this! It starts with 'sk_test_' for testing or 'sk_live_' for real payments." />
                 </label>
                 <input
                   type="password"
@@ -557,14 +739,15 @@ export default function IntegrationsSettings() {
                   onChange={(e) =>
                     setStripeConfig({ ...stripeConfig, secretKey: e.target.value })
                   }
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  placeholder="sk_test_..."
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder="sk_test_... or sk_live_..."
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Publishable Key
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Publishable Key (safe to share)
+                  <Tooltip text="This key is safe to use in your website. It starts with 'pk_test_' for testing or 'pk_live_' for real payments." />
                 </label>
                 <input
                   type="text"
@@ -572,14 +755,15 @@ export default function IntegrationsSettings() {
                   onChange={(e) =>
                     setStripeConfig({ ...stripeConfig, publishableKey: e.target.value })
                   }
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  placeholder="pk_test_..."
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder="pk_test_... or pk_live_..."
                 />
               </div>
 
-              <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Webhook Secret
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Webhook Secret (optional for now)
+                  <Tooltip text="This lets Stripe notify you about payments. You can skip this for now and add it later if needed. It starts with 'whsec_'." />
                 </label>
                 <input
                   type="password"
@@ -587,20 +771,20 @@ export default function IntegrationsSettings() {
                   onChange={(e) =>
                     setStripeConfig({ ...stripeConfig, webhookSecret: e.target.value })
                   }
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  placeholder="whsec_..."
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder="whsec_... (optional)"
                 />
               </div>
             </div>
 
-            <div className="mt-5 flex gap-3">
+            <div className="mt-6 flex gap-3">
               <button
                 onClick={handleSaveStripe}
                 disabled={loading}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-                Save Credentials
+                {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}
+                Save Payment Settings
               </button>
 
               {stripeConfigured && (
@@ -620,31 +804,71 @@ export default function IntegrationsSettings() {
       {/* Video Tab */}
       {activeTab === 'video' && (
         <div className="space-y-6">
-          <div className="bg-white shadow sm:rounded-lg">
+          <div className="bg-white shadow sm:rounded-lg border border-gray-200">
             <div className="px-4 py-5 sm:p-6">
-              <h3 className="text-lg font-medium leading-6 text-gray-900">Zoom</h3>
-              <p className="mt-2 text-sm text-gray-500">
-                Create Zoom meetings for your appointments
-              </p>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="text-3xl">🎥</div>
+                <div>
+                  <h3 className="text-lg font-medium leading-6 text-gray-900">Zoom Video Calls</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Automatically create Zoom links for your appointments
+                  </p>
+                </div>
+              </div>
+
+              <HelpSection title="What does this do?" defaultOpen>
+                <p>When you connect Zoom:</p>
+                <ul className="list-disc list-inside space-y-1 ml-2 mt-2">
+                  <li>Each appointment automatically gets a Zoom meeting link</li>
+                  <li>Your clients receive the link in their confirmation</li>
+                  <li>No need to manually create meetings - it's automatic!</li>
+                  <li>Perfect for remote consultations or virtual appointments</li>
+                </ul>
+                <p className="text-xs mt-3 p-2 bg-green-50 border border-green-200 rounded">
+                  ✨ <strong>Simple setup:</strong> Click below and sign in with your Zoom account!
+                </p>
+              </HelpSection>
+
               <button
                 onClick={handleConnectZoom}
-                className="mt-5 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="mt-5 inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
+                <ExternalLink className="h-4 w-4 mr-2" />
                 Connect Zoom
               </button>
             </div>
           </div>
 
-          <div className="bg-white shadow sm:rounded-lg">
+          <div className="bg-white shadow sm:rounded-lg border border-gray-200">
             <div className="px-4 py-5 sm:p-6">
-              <h3 className="text-lg font-medium leading-6 text-gray-900">Google Meet</h3>
-              <p className="mt-2 text-sm text-gray-500">
-                Create Google Meet links for your appointments (requires Google Calendar integration)
-              </p>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="text-3xl">📹</div>
+                <div>
+                  <h3 className="text-lg font-medium leading-6 text-gray-900">Google Meet</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Use Google Meet for video calls (requires Google Calendar)
+                  </p>
+                </div>
+              </div>
+
+              <HelpSection title="What does this do?" defaultOpen>
+                <p>When you use Google Meet:</p>
+                <ul className="list-disc list-inside space-y-1 ml-2 mt-2">
+                  <li>Free video calling built into Google Calendar</li>
+                  <li>No extra app needed - works in any web browser</li>
+                  <li>Automatic meeting links for each appointment</li>
+                  <li>Great if you already use Gmail or Google Calendar</li>
+                </ul>
+                <p className="text-xs mt-3 p-2 bg-blue-50 border border-blue-200 rounded">
+                  ℹ️ <strong>Note:</strong> You need to connect Google Calendar first (see Calendar tab above)
+                </p>
+              </HelpSection>
+
               <button
                 onClick={handleConnectGoogle}
-                className="mt-5 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="mt-5 inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
+                <ExternalLink className="h-4 w-4 mr-2" />
                 Connect Google Calendar
               </button>
             </div>
@@ -654,24 +878,51 @@ export default function IntegrationsSettings() {
 
       {/* Email Tab */}
       {activeTab === 'email' && (
-        <div className="bg-white shadow sm:rounded-lg">
+        <div className="bg-white shadow sm:rounded-lg border border-gray-200">
           <div className="px-4 py-5 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-medium leading-6 text-gray-900 flex items-center gap-2">
-                  Email / SMTP Configuration
-                  {emailConfigured && <Check className="h-5 w-5 text-green-500" />}
-                </h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Send email notifications to your clients
-                </p>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="text-3xl">✉️</div>
+                <div>
+                  <h3 className="text-lg font-medium leading-6 text-gray-900">
+                    Email Notifications
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Send appointment reminders and confirmations by email
+                  </p>
+                </div>
               </div>
+              <StatusBadge configured={emailConfigured} />
             </div>
 
-            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <HelpSection title="How do I set this up?" defaultOpen={!emailConfigured}>
+              <div className="space-y-3">
+                <p className="font-medium">The easiest way (Gmail):</p>
+                <ol className="list-decimal list-inside space-y-2 ml-2">
+                  <li>Go to your <a href="https://myaccount.google.com/security" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Google Account Security</a></li>
+                  <li>Turn on "2-Step Verification" if not already on</li>
+                  <li>Go to "App Passwords" and create a new one</li>
+                  <li>Select "Mail" and "Other device"</li>
+                  <li>Copy the 16-character password and use it below</li>
+                </ol>
+                <div className="bg-blue-50 border border-blue-200 rounded p-3 text-xs space-y-1">
+                  <p><strong>Quick Settings for Gmail:</strong></p>
+                  <p>• SMTP Host: <code className="bg-white px-1 py-0.5 rounded">smtp.gmail.com</code></p>
+                  <p>• Port: <code className="bg-white px-1 py-0.5 rounded">587</code></p>
+                  <p>• Email: Your Gmail address</p>
+                  <p>• Password: Your App Password (not your regular Gmail password!)</p>
+                </div>
+                <p className="text-xs mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                  💡 <strong>Tip:</strong> Other email providers work too (Outlook, Yahoo, etc.) - just use their SMTP settings
+                </p>
+              </div>
+            </HelpSection>
+
+            <div className="mt-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  SMTP Host
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Mail Server (SMTP Host)
+                  <Tooltip text="For Gmail use 'smtp.gmail.com'. For Outlook use 'smtp-mail.outlook.com'. For Yahoo use 'smtp.mail.yahoo.com'." />
                 </label>
                 <input
                   type="text"
@@ -679,29 +930,31 @@ export default function IntegrationsSettings() {
                   onChange={(e) =>
                     setEmailConfig({ ...emailConfig, host: e.target.value })
                   }
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  placeholder="smtp.gmail.com"
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder="e.g., smtp.gmail.com"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Port
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Port Number
+                  <Tooltip text="Use 587 for most email providers. This is a technical setting - 587 works for Gmail, Outlook, and most others." />
                 </label>
                 <input
                   type="number"
                   value={emailConfig.port}
                   onChange={(e) =>
-                    setEmailConfig({ ...emailConfig, port: parseInt(e.target.value) })
+                    setEmailConfig({ ...emailConfig, port: parseInt(e.target.value) || 587 })
                   }
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                   placeholder="587"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Email Address
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Your Email Address
+                  <Tooltip text="The email address you want to send notifications from. Your clients will see emails coming from this address." />
                 </label>
                 <input
                   type="email"
@@ -709,14 +962,15 @@ export default function IntegrationsSettings() {
                   onChange={(e) =>
                     setEmailConfig({ ...emailConfig, user: e.target.value })
                   }
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                   placeholder="your-email@gmail.com"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Password / App Password
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Password
+                  <Tooltip text="For Gmail, use an App Password (NOT your regular password). For other providers, use your email password." />
                 </label>
                 <input
                   type="password"
@@ -724,12 +978,12 @@ export default function IntegrationsSettings() {
                   onChange={(e) =>
                     setEmailConfig({ ...emailConfig, password: e.target.value })
                   }
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  placeholder="Enter password or app password"
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder="Your app password or email password"
                 />
               </div>
 
-              <div className="sm:col-span-2">
+              <div>
                 <label className="flex items-center">
                   <input
                     type="checkbox"
@@ -739,19 +993,22 @@ export default function IntegrationsSettings() {
                     }
                     className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                   />
-                  <span className="ml-2 text-sm text-gray-700">Use SSL/TLS</span>
+                  <span className="ml-2 text-sm text-gray-700">
+                    Use secure connection (SSL/TLS)
+                    <Tooltip text="Leave this unchecked for port 587 (recommended). Only check this if using port 465." />
+                  </span>
                 </label>
               </div>
             </div>
 
-            <div className="mt-5 flex gap-3">
+            <div className="mt-6 flex gap-3">
               <button
                 onClick={handleSaveEmail}
                 disabled={loading}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-                Save Credentials
+                {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}
+                Save Email Settings
               </button>
 
               {emailConfigured && (
