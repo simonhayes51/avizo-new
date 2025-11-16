@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Check, X, Loader2, ExternalLink, ChevronDown, ChevronUp, HelpCircle, AlertCircle, CheckCircle } from 'lucide-react';
+import { Check, X, Loader2, ExternalLink, ChevronDown, ChevronUp, HelpCircle, AlertCircle, CheckCircle, Info } from 'lucide-react';
 import api from '../lib/api';
 
 // Help section component
@@ -74,6 +74,7 @@ export default function IntegrationsSettings() {
   const [testResults, setTestResults] = useState<{ [key: string]: any }>({});
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [showOAuthInfo, setShowOAuthInfo] = useState<string | null>(null);
 
   // WhatsApp state
   const [whatsappConfig, setWhatsappConfig] = useState({
@@ -267,31 +268,16 @@ export default function IntegrationsSettings() {
     }
   };
 
-  const handleConnectGoogle = async () => {
-    try {
-      const { url } = await api.integrations.googleAuth();
-      window.location.href = url;
-    } catch (error: any) {
-      showError('Could not connect to Google: ' + error.message);
-    }
+  const handleConnectGoogle = () => {
+    setShowOAuthInfo('google');
   };
 
-  const handleConnectMicrosoft = async () => {
-    try {
-      const { url } = await api.integrations.microsoftAuth();
-      window.location.href = url;
-    } catch (error: any) {
-      showError('Could not connect to Microsoft: ' + error.message);
-    }
+  const handleConnectMicrosoft = () => {
+    setShowOAuthInfo('microsoft');
   };
 
-  const handleConnectZoom = async () => {
-    try {
-      const { url } = await api.integrations.zoomAuth();
-      window.location.href = url;
-    } catch (error: any) {
-      showError('Could not connect to Zoom: ' + error.message);
-    }
+  const handleConnectZoom = () => {
+    setShowOAuthInfo('zoom');
   };
 
   return (
@@ -649,8 +635,8 @@ export default function IntegrationsSettings() {
                 onClick={handleConnectGoogle}
                 className="mt-5 inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Connect Google Calendar
+                <Info className="h-4 w-4 mr-2" />
+                Learn How to Connect
               </button>
             </div>
           </div>
@@ -684,8 +670,8 @@ export default function IntegrationsSettings() {
                 onClick={handleConnectMicrosoft}
                 className="mt-5 inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Connect Outlook Calendar
+                <Info className="h-4 w-4 mr-2" />
+                Learn How to Connect
               </button>
             </div>
           </div>
@@ -833,8 +819,8 @@ export default function IntegrationsSettings() {
                 onClick={handleConnectZoom}
                 className="mt-5 inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Connect Zoom
+                <Info className="h-4 w-4 mr-2" />
+                Learn How to Connect
               </button>
             </div>
           </div>
@@ -868,8 +854,8 @@ export default function IntegrationsSettings() {
                 onClick={handleConnectGoogle}
                 className="mt-5 inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Connect Google Calendar
+                <Info className="h-4 w-4 mr-2" />
+                Learn How to Connect
               </button>
             </div>
           </div>
@@ -1024,6 +1010,127 @@ export default function IntegrationsSettings() {
           </div>
         </div>
       )}
+
+      {/* OAuth Info Modal */}
+      {showOAuthInfo && (
+        <OAuthInfoModal
+          provider={showOAuthInfo}
+          onClose={() => setShowOAuthInfo(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+// OAuth Info Modal Component
+function OAuthInfoModal({ provider, onClose }: { provider: string; onClose: () => void }) {
+  const providerInfo: Record<string, { name: string; description: string; steps: string[]; contactInfo: string; docsUrl: string }> = {
+    google: {
+      name: 'Google Calendar',
+      description: 'OAuth integration requires technical setup through Google Cloud Console. This allows secure access to your Google Calendar.',
+      steps: [
+        'Create a Google Cloud project at console.cloud.google.com',
+        'Enable the Google Calendar API',
+        'Create OAuth 2.0 credentials',
+        'Add authorized redirect URIs',
+        'Contact support with your Client ID and Client Secret'
+      ],
+      contactInfo: 'Contact support at support@avizo.app with your Google OAuth credentials, and we\'ll complete the setup for you!',
+      docsUrl: 'https://console.cloud.google.com/'
+    },
+    microsoft: {
+      name: 'Microsoft/Outlook Calendar',
+      description: 'OAuth integration requires setup through Azure Portal. This allows secure access to your Outlook/Microsoft Calendar.',
+      steps: [
+        'Register an application in Azure Portal',
+        'Add Microsoft Graph Calendar permissions',
+        'Create a client secret',
+        'Configure redirect URIs',
+        'Contact support with your Application (client) ID and secret'
+      ],
+      contactInfo: 'Contact support at support@avizo.app with your Microsoft OAuth credentials, and we\'ll complete the setup for you!',
+      docsUrl: 'https://portal.azure.com/'
+    },
+    zoom: {
+      name: 'Zoom',
+      description: 'OAuth integration requires setup through Zoom App Marketplace. This allows automatic creation of Zoom meetings for your appointments.',
+      steps: [
+        'Create a Server-to-Server OAuth app at marketplace.zoom.us',
+        'Add required scopes (meeting:write)',
+        'Copy Account ID, Client ID, and Client Secret',
+        'Contact support with your Zoom credentials'
+      ],
+      contactInfo: 'Contact support at support@avizo.app with your Zoom OAuth credentials, and we\'ll complete the setup for you!',
+      docsUrl: 'https://marketplace.zoom.us/'
+    }
+  };
+
+  const info = providerInfo[provider];
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-slate-200 flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-slate-900">Setting Up {info.name}</h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-slate-100 rounded-lg transition"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="font-semibold text-blue-900 mb-2">OAuth Integration Setup</h3>
+                <p className="text-sm text-blue-800">{info.description}</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="font-semibold text-slate-900 mb-3">Setup Steps:</h3>
+            <ol className="space-y-3">
+              {info.steps.map((step, index) => (
+                <li key={index} className="flex gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm font-semibold">
+                    {index + 1}
+                  </span>
+                  <span className="text-slate-700 pt-0.5">{step}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <h3 className="font-semibold text-amber-900 mb-2">Need Help?</h3>
+            <p className="text-sm text-amber-800">
+              {info.contactInfo}
+            </p>
+          </div>
+
+          <div className="flex gap-3">
+            <a
+              href={info.docsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 inline-flex items-center justify-center px-4 py-3 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition"
+            >
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Open {provider === 'google' ? 'Google Cloud' : provider === 'microsoft' ? 'Azure Portal' : 'Zoom Marketplace'}
+            </a>
+            <button
+              onClick={onClose}
+              className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition"
+            >
+              Got It
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
