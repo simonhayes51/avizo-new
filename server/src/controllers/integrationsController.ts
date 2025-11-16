@@ -1,6 +1,9 @@
-import { Response } from 'express';
-import { query } from '../config/database';
+import { Request, Response } from 'express';
+import { query, getDb } from '../config/database';
 import { AuthRequest } from '../middleware/auth';
+import { GoogleCalendarService } from '../services/googleCalendarService';
+import { MicrosoftCalendarService } from '../services/microsoftCalendarService';
+import { ZoomService } from '../services/zoomService';
 
 export const getIntegrations = async (req: AuthRequest, res: Response) => {
   try {
@@ -83,5 +86,131 @@ export const deleteIntegration = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Delete integration error:', error);
     res.status(500).json({ error: 'Failed to delete integration' });
+  }
+};
+
+// Google Calendar OAuth
+export const googleAuthUrl = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.userId;
+    const db = getDb();
+    const googleService = new GoogleCalendarService(db);
+
+    const authUrl = googleService.getAuthUrl(userId!);
+    res.json({ url: authUrl });
+  } catch (error: any) {
+    console.error('Google auth URL error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const googleCallback = async (req: Request, res: Response) => {
+  try {
+    const { code, state } = req.query;
+    const userId = state as string;
+
+    const db = getDb();
+    const googleService = new GoogleCalendarService(db);
+
+    await googleService.handleCallback(code as string, userId);
+
+    res.redirect(`${process.env.APP_URL}/settings?integration=google_calendar&status=success`);
+  } catch (error: any) {
+    console.error('Google callback error:', error);
+    res.redirect(`${process.env.APP_URL}/settings?integration=google_calendar&status=error`);
+  }
+};
+
+export const syncGoogleCalendar = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.userId;
+    const db = getDb();
+    const googleService = new GoogleCalendarService(db);
+
+    await googleService.syncFromGoogle(userId!);
+
+    res.json({ success: true, message: 'Calendar synced successfully' });
+  } catch (error: any) {
+    console.error('Google sync error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Microsoft Calendar OAuth
+export const microsoftAuthUrl = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.userId;
+    const db = getDb();
+    const microsoftService = new MicrosoftCalendarService(db);
+
+    const authUrl = microsoftService.getAuthUrl(userId!);
+    res.json({ url: authUrl });
+  } catch (error: any) {
+    console.error('Microsoft auth URL error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const microsoftCallback = async (req: Request, res: Response) => {
+  try {
+    const { code, state } = req.query;
+    const userId = state as string;
+
+    const db = getDb();
+    const microsoftService = new MicrosoftCalendarService(db);
+
+    await microsoftService.handleCallback(code as string, userId);
+
+    res.redirect(`${process.env.APP_URL}/settings?integration=microsoft_calendar&status=success`);
+  } catch (error: any) {
+    console.error('Microsoft callback error:', error);
+    res.redirect(`${process.env.APP_URL}/settings?integration=microsoft_calendar&status=error`);
+  }
+};
+
+export const syncMicrosoftCalendar = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.userId;
+    const db = getDb();
+    const microsoftService = new MicrosoftCalendarService(db);
+
+    await microsoftService.syncFromMicrosoft(userId!);
+
+    res.json({ success: true, message: 'Calendar synced successfully' });
+  } catch (error: any) {
+    console.error('Microsoft sync error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Zoom OAuth
+export const zoomAuthUrl = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.userId;
+    const db = getDb();
+    const zoomService = new ZoomService(db);
+
+    const authUrl = zoomService.getAuthUrl(userId!);
+    res.json({ url: authUrl });
+  } catch (error: any) {
+    console.error('Zoom auth URL error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const zoomCallback = async (req: Request, res: Response) => {
+  try {
+    const { code, state } = req.query;
+    const userId = state as string;
+
+    const db = getDb();
+    const zoomService = new ZoomService(db);
+
+    await zoomService.handleCallback(code as string, userId);
+
+    res.redirect(`${process.env.APP_URL}/settings?integration=zoom&status=success`);
+  } catch (error: any) {
+    console.error('Zoom callback error:', error);
+    res.redirect(`${process.env.APP_URL}/settings?integration=zoom&status=error`);
   }
 };
