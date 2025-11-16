@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Save, Link2, Calendar as CalendarIcon, Phone, Building2 } from 'lucide-react';
 import api from '../lib/api';
+import IntegrationsSettings from './IntegrationsSettings';
 
 interface Profile {
   id: string;
@@ -18,6 +19,7 @@ interface Integration {
 }
 
 export default function Settings() {
+  const [activeTab, setActiveTab] = useState('profile');
   const [profile, setProfile] = useState<Profile | null>(null);
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,10 +76,37 @@ export default function Settings() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-3xl font-bold text-slate-900 mb-8">Settings</h1>
 
-      <div className="space-y-6">
+      {/* Tabs */}
+      <div className="border-b border-gray-200 mb-8">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('profile')}
+            className={`${
+              activeTab === 'profile'
+                ? 'border-indigo-500 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+            } whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium`}
+          >
+            Business Profile
+          </button>
+          <button
+            onClick={() => setActiveTab('integrations')}
+            className={`${
+              activeTab === 'integrations'
+                ? 'border-indigo-500 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+            } whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium`}
+          >
+            Integrations
+          </button>
+        </nav>
+      </div>
+
+      {/* Profile Tab */}
+      {activeTab === 'profile' && (
         <section className="bg-white rounded-lg border border-slate-200 p-6">
           <div className="flex items-center space-x-2 mb-6">
             <Building2 className="w-5 h-5 text-slate-600" />
@@ -170,88 +199,11 @@ export default function Settings() {
             </div>
           </div>
         </section>
+      )}
 
-        <section className="bg-white rounded-lg border border-slate-200 p-6">
-          <div className="flex items-center space-x-2 mb-6">
-            <Link2 className="w-5 h-5 text-slate-600" />
-            <h2 className="text-xl font-semibold text-slate-900">Integrations</h2>
-          </div>
-
-          <p className="text-slate-600 mb-6">
-            Connect your existing diary or booking system to automatically sync appointments to Avizo.
-          </p>
-
-          <div className="space-y-3">
-            <IntegrationCard
-              name="Google Calendar"
-              description="Sync appointments from Google Calendar"
-              icon={<CalendarIcon className="w-6 h-6 text-blue-600" />}
-              connected={integrations.some((i) => i.provider === 'google_calendar' && i.is_active)}
-              onConnect={() => alert('Google Calendar integration coming soon')}
-            />
-
-            <IntegrationCard
-              name="Outlook Calendar"
-              description="Sync appointments from Outlook"
-              icon={<CalendarIcon className="w-6 h-6 text-blue-500" />}
-              connected={integrations.some((i) => i.provider === 'outlook' && i.is_active)}
-              onConnect={() => alert('Outlook integration coming soon')}
-            />
-
-            <IntegrationCard
-              name="Acuity Scheduling"
-              description="Import bookings from Acuity"
-              icon={<CalendarIcon className="w-6 h-6 text-teal-600" />}
-              connected={integrations.some((i) => i.provider === 'acuity' && i.is_active)}
-              onConnect={() => alert('Acuity integration coming soon')}
-            />
-
-            <IntegrationCard
-              name="Calendly"
-              description="Import bookings from Calendly"
-              icon={<CalendarIcon className="w-6 h-6 text-blue-700" />}
-              connected={integrations.some((i) => i.provider === 'calendly' && i.is_active)}
-              onConnect={() => alert('Calendly integration coming soon')}
-            />
-          </div>
-        </section>
-      </div>
-    </div>
-  );
-}
-
-interface IntegrationCardProps {
-  name: string;
-  description: string;
-  icon: React.ReactNode;
-  connected: boolean;
-  onConnect: () => void;
-}
-
-function IntegrationCard({ name, description, icon, connected, onConnect }: IntegrationCardProps) {
-  return (
-    <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
-      <div className="flex items-center space-x-4">
-        <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
-          {icon}
-        </div>
-        <div>
-          <h3 className="font-semibold text-slate-900">{name}</h3>
-          <p className="text-sm text-slate-600">{description}</p>
-        </div>
-      </div>
-
-      {connected ? (
-        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-          Connected
-        </span>
-      ) : (
-        <button
-          onClick={onConnect}
-          className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-white transition-colors font-medium"
-        >
-          Connect
-        </button>
+      {/* Integrations Tab */}
+      {activeTab === 'integrations' && (
+        <IntegrationsSettings />
       )}
     </div>
   );

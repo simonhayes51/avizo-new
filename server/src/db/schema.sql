@@ -203,7 +203,9 @@ CREATE TABLE IF NOT EXISTS integrations (
   is_active boolean DEFAULT true,
   last_synced_at timestamptz,
   settings jsonb DEFAULT '{}',
-  created_at timestamptz DEFAULT now()
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  UNIQUE(user_id, provider)
 );
 
 CREATE INDEX IF NOT EXISTS idx_integrations_user ON integrations(user_id);
