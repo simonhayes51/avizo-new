@@ -21,12 +21,20 @@ export class WhatsAppService {
   private accessToken: string;
   private baseUrl: string;
   private db: Pool;
+  private initialized: boolean;
 
-  constructor(db: Pool) {
-    this.phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID || '';
-    this.accessToken = process.env.WHATSAPP_ACCESS_TOKEN || '';
-    this.baseUrl = `https://graph.facebook.com/v18.0`;
+  constructor(db: Pool, phoneNumberId?: string, accessToken?: string) {
     this.db = db;
+    this.phoneNumberId = phoneNumberId || '';
+    this.accessToken = accessToken || '';
+    this.baseUrl = `https://graph.facebook.com/v18.0`;
+    this.initialized = !!(phoneNumberId && accessToken);
+  }
+
+  private ensureInitialized() {
+    if (!this.initialized) {
+      throw new Error('WhatsApp not initialized. Please provide credentials.');
+    }
   }
 
   async sendMessage(to: string, text: string): Promise<any> {
