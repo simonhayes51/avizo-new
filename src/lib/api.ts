@@ -247,6 +247,138 @@ class ApiClient {
         method: 'DELETE',
       });
     },
+
+    // Calendar integrations
+    googleAuth: async () => {
+      return this.request('/integrations/google/auth');
+    },
+
+    syncGoogle: async () => {
+      return this.request('/integrations/google/sync', { method: 'POST' });
+    },
+
+    microsoftAuth: async () => {
+      return this.request('/integrations/microsoft/auth');
+    },
+
+    syncMicrosoft: async () => {
+      return this.request('/integrations/microsoft/sync', { method: 'POST' });
+    },
+
+    // Zoom integration
+    zoomAuth: async () => {
+      return this.request('/integrations/zoom/auth');
+    },
+  };
+
+  // Payments
+  payments = {
+    getAll: async () => {
+      return this.request('/payments');
+    },
+
+    createIntent: async (data: any) => {
+      return this.request('/payments/intent', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+
+    createCheckout: async (data: any) => {
+      return this.request('/payments/checkout', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+
+    refund: async (paymentIntentId: string) => {
+      return this.request('/payments/refund', {
+        method: 'POST',
+        body: JSON.stringify({ paymentIntentId }),
+      });
+    },
+  };
+
+  // Invoices
+  invoices = {
+    getAll: async () => {
+      return this.request('/invoices');
+    },
+
+    create: async (data: any) => {
+      return this.request('/invoices', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+
+    update: async (id: string, data: any) => {
+      return this.request(`/invoices/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+    },
+
+    delete: async (id: string) => {
+      return this.request(`/invoices/${id}`, {
+        method: 'DELETE',
+      });
+    },
+  };
+
+  // Recurring Appointments
+  recurring = {
+    getAll: async () => {
+      return this.request('/recurring');
+    },
+
+    create: async (data: any) => {
+      return this.request('/recurring', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+
+    update: async (id: string, data: any) => {
+      return this.request(`/recurring/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+    },
+
+    delete: async (id: string) => {
+      return this.request(`/recurring/${id}`, {
+        method: 'DELETE',
+      });
+    },
+  };
+
+  // Waiting List
+  waitingList = {
+    getAll: async (status?: string) => {
+      const query = status ? `?status=${status}` : '';
+      return this.request(`/waiting-list${query}`);
+    },
+
+    add: async (data: any) => {
+      return this.request('/waiting-list', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+
+    update: async (id: string, data: any) => {
+      return this.request(`/waiting-list/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+    },
+
+    delete: async (id: string) => {
+      return this.request(`/waiting-list/${id}`, {
+        method: 'DELETE',
+      });
+    },
   };
 
   // Analytics
