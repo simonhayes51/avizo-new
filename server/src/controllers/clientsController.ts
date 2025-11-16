@@ -53,6 +53,19 @@ export const createClient = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ error: 'User authentication required' });
     }
 
+    // Check if user exists in database
+    const userCheck = await query(
+      'SELECT id FROM users WHERE id = $1',
+      [userId]
+    );
+
+    if (userCheck.rows.length === 0) {
+      return res.status(401).json({
+        error: 'Your session has expired. Please log out and log in again.',
+        code: 'USER_NOT_FOUND'
+      });
+    }
+
     // Ensure tags is an array
     const tagsArray = Array.isArray(tags) ? tags : [];
 
@@ -75,6 +88,15 @@ export const createClient = async (req: AuthRequest, res: Response) => {
       detail: error.detail,
       stack: error.stack
     });
+
+    // Handle foreign key constraint specifically
+    if (error.code === '23503') {
+      return res.status(401).json({
+        error: 'Your session has expired. Please log out and log in again.',
+        code: 'SESSION_EXPIRED'
+      });
+    }
+
     res.status(500).json({
       error: 'Failed to create client',
       details: error.message,

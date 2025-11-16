@@ -74,7 +74,17 @@ export default function Clients() {
       const errorMessage = error.message || 'Failed to save client. Please try again.';
       // Extract more details if available
       const detailedError = error.response?.data?.details || error.response?.data?.error || errorMessage;
-      setError(detailedError);
+
+      // Handle session expiration
+      if (error.response?.data?.code === 'USER_NOT_FOUND' || error.response?.data?.code === 'SESSION_EXPIRED') {
+        setError(detailedError + ' Redirecting to login...');
+        setTimeout(() => {
+          localStorage.clear();
+          window.location.href = '/';
+        }, 2000);
+      } else {
+        setError(detailedError);
+      }
     }
   };
 
