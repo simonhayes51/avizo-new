@@ -7,7 +7,7 @@ import { StripeService } from '../services/stripeService';
 export const createWebhooksController = (db: Pool) => {
   const whatsappService = new WhatsAppService(db);
   const twilioService = new TwilioService(db);
-  const stripeService = new StripeService(db);
+  // Note: StripeService requires user-specific credentials, handled per-request
 
   // WhatsApp webhook verification and message handling
   const whatsappWebhook = async (req: Request, res: Response) => {
@@ -95,11 +95,11 @@ export const createWebhooksController = (db: Pool) => {
   // Stripe webhook
   const stripeWebhook = async (req: Request, res: Response) => {
     try {
-      const signature = req.headers['stripe-signature'] as string;
-
-      // req.body should be raw body for Stripe
-      await stripeService.handleWebhook(req.body, signature);
-
+      // Stripe webhooks require platform-level configuration
+      // Since each business has their own Stripe account, webhooks should be configured
+      // to point to business-specific webhook endpoints or use Connect
+      // For now, acknowledge receipt to avoid errors
+      console.log('Stripe webhook received - per-business webhook handling not yet implemented');
       res.json({ received: true });
     } catch (error: any) {
       console.error('Stripe webhook error:', error);

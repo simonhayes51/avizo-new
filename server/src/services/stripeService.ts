@@ -2,21 +2,24 @@ import Stripe from 'stripe';
 import { Pool } from 'pg';
 
 export class StripeService {
-  private stripe: Stripe;
+  private stripe: Stripe | null = null;
   private db: Pool;
 
-  constructor(db: Pool) {
-    const secretKey = process.env.STRIPE_SECRET_KEY;
-
-    if (!secretKey) {
-      throw new Error('Stripe secret key not configured');
-    }
-
-    this.stripe = new Stripe(secretKey, {
-      apiVersion: '2025-10-29.clover'
-    });
-
+  constructor(db: Pool, secretKey?: string) {
     this.db = db;
+
+    // Initialize with provided key (either from env or database)
+    if (secretKey) {
+      this.stripe = new Stripe(secretKey, {
+        apiVersion: '2025-10-29.clover'
+      });
+    }
+  }
+
+  private ensureInitialized() {
+    if (!this.stripe) {
+      throw new Error('Stripe not initialized. Please provide credentials.');
+    }
   }
 
   async createPaymentIntent(
@@ -27,8 +30,9 @@ export class StripeService {
     currency: string = 'gbp',
     description?: string
   ): Promise<Stripe.PaymentIntent> {
+    this.ensureInitialized();
     try {
-      const paymentIntent = await this.stripe.paymentIntents.create({
+      const paymentIntent = await this.stripe!.paymentIntents.create({
         amount: Math.round(amount * 100), // Convert to cents
         currency: currency.toLowerCase(),
         description: description || 'Appointment payment',
@@ -64,6 +68,7 @@ export class StripeService {
   }
 
   async handleWebhook(rawBody: string, signature: string): Promise<void> {
+    this.ensureInitialized();
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
     if (!webhookSecret) {
@@ -71,7 +76,7 @@ export class StripeService {
     }
 
     try {
-      const event = this.stripe.webhooks.constructEvent(
+      const event = this.stripe!.webhooks.constructEvent(
         rawBody,
         signature,
         webhookSecret
@@ -145,6 +150,7 @@ export class StripeService {
     successUrl: string,
     cancelUrl: string
   ): Promise<Stripe.Checkout.Session> {
+    this.ensureInitialized();
     try {
       // Get appointment details
       const appointmentResult = await this.db.query(
@@ -154,7 +160,7 @@ export class StripeService {
 
       const title = appointmentResult.rows[0]?.title || 'Appointment';
 
-      const session = await this.stripe.checkout.sessions.create({
+      const session = await this.stripe!.checkout.sessions.create({
         payment_method_types: ['card'],
         line_items: [
           {
@@ -205,8 +211,9 @@ export class StripeService {
   }
 
   async refundPayment(paymentIntentId: string): Promise<Stripe.Refund> {
+    this.ensureInitialized();
     try {
-      const refund = await this.stripe.refunds.create({
+      const refund = await this.stripe!.refunds.create({
         payment_intent: paymentIntentId
       });
 
