@@ -2,8 +2,24 @@ import { Response } from 'express';
 import { query, getDb } from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 import { StripeService } from '../services/stripeService';
+import { decrypt } from '../utils/encryption';
 
-const stripeService = new StripeService(getDb());
+// Helper to get Stripe service with user's credentials
+async function getStripeService(userId: string): Promise<StripeService> {
+  const result = await query(
+    'SELECT credentials FROM integrations WHERE user_id = $1 AND provider = $2 AND is_active = true',
+    [userId, 'stripe']
+  );
+
+  if (result.rows.length === 0) {
+    throw new Error('Stripe not configured. Please add your Stripe credentials in Settings.');
+  }
+
+  const credentials = result.rows[0].credentials;
+  const secretKey = decrypt(credentials.secretKey);
+
+  return new StripeService(getDb(), secretKey);
+}
 
 export const getPayments = async (req: AuthRequest, res: Response) => {
   try {
@@ -31,6 +47,7 @@ export const createPaymentIntent = async (req: AuthRequest, res: Response) => {
     const userId = req.userId!;
     const { appointmentId, clientId, amount, currency, description } = req.body;
 
+    const stripeService = await getStripeService(userId);
     const paymentIntent = await stripeService.createPaymentIntent(
       userId,
       appointmentId,
@@ -52,6 +69,7 @@ export const createCheckoutSession = async (req: AuthRequest, res: Response) => 
     const userId = req.userId!;
     const { appointmentId, clientId, amount, currency, successUrl, cancelUrl } = req.body;
 
+    const stripeService = await getStripeService(userId);
     const session = await stripeService.createCheckoutSession(
       userId,
       appointmentId,
@@ -71,8 +89,10 @@ export const createCheckoutSession = async (req: AuthRequest, res: Response) => 
 
 export const refundPayment = async (req: AuthRequest, res: Response) => {
   try {
+    const userId = req.userId!;
     const { paymentIntentId } = req.body;
 
+    const stripeService = await getStripeService(userId);
     const refund = await stripeService.refundPayment(paymentIntentId);
 
     res.json({ success: true, refund });
