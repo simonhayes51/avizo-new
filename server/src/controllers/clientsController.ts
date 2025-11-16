@@ -44,17 +44,42 @@ export const createClient = async (req: AuthRequest, res: Response) => {
     const userId = req.userId;
     const { name, phoneNumber, email, notes, tags } = req.body;
 
+    // Validate required fields
+    if (!name || !phoneNumber) {
+      return res.status(400).json({ error: 'Name and phone number are required' });
+    }
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User authentication required' });
+    }
+
+    // Ensure tags is an array
+    const tagsArray = Array.isArray(tags) ? tags : [];
+
+    console.log('Creating client with data:', { userId, name, phoneNumber, email, notes, tags: tagsArray });
+
     const result = await query(
       `INSERT INTO clients (user_id, name, phone_number, email, notes, tags)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [userId, name, phoneNumber, email || null, notes || '', tags || []]
+      [userId, name, phoneNumber, email || null, notes || '', tagsArray]
     );
 
+    console.log('Client created successfully:', result.rows[0]);
     res.status(201).json(result.rows[0]);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Create client error:', error);
-    res.status(500).json({ error: 'Failed to create client' });
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      detail: error.detail,
+      stack: error.stack
+    });
+    res.status(500).json({
+      error: 'Failed to create client',
+      details: error.message,
+      code: error.code
+    });
   }
 };
 
