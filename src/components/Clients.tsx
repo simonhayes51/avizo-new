@@ -27,6 +27,8 @@ export default function Clients() {
     tags: [] as string[],
   });
   const [tagInput, setTagInput] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   useEffect(() => {
     loadClients();
@@ -55,16 +57,21 @@ export default function Clients() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     try {
       if (editingClient) {
         await api.clients.update(editingClient.id, formData);
+        setSuccess('Client updated successfully!');
       } else {
         await api.clients.create(formData);
+        setSuccess('Client added successfully!');
       }
       await loadClients();
       closeModal();
-    } catch (error) {
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (error: any) {
       console.error('Failed to save client:', error);
+      setError(error.message || 'Failed to save client. Please try again.');
     }
   };
 
@@ -144,6 +151,18 @@ export default function Clients() {
           Add Client
         </button>
       </div>
+
+      {/* Success/Error Messages */}
+      {success && (
+        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-800">
+          {success}
+        </div>
+      )}
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+          {error}
+        </div>
+      )}
 
       {/* Search */}
       <div className="mb-6">

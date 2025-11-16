@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clock, MapPin, User, AlertCircle, Plus, X } from 'lucide-react';
+import { Clock, MapPin, User, AlertCircle, Plus, X, Calendar as CalendarIcon, Users, DollarSign, TrendingUp, MessageSquare, Bell, Download, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import { Appointment, Client } from '../types';
@@ -10,8 +10,17 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showQuickAddModal, setShowQuickAddModal] = useState(false);
   const [showFillGapModal, setShowFillGapModal] = useState(false);
   const [selectedGap, setSelectedGap] = useState<Appointment | null>(null);
+  const [stats, setStats] = useState({
+    totalClients: 0,
+    appointmentsToday: 0,
+    appointmentsThisWeek: 0,
+    appointmentsThisMonth: 0,
+  });
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadData();
@@ -19,15 +28,30 @@ export default function Dashboard() {
 
   const loadData = async () => {
     try {
-      const [appointmentsData, clientsData] = await Promise.all([
+      const [appointmentsData, clientsData, weeklyData, monthlyData] = await Promise.all([
         api.appointments.getAll({
           date: selectedDate.toISOString().split('T')[0],
         }),
-        api.clients.getAll()
+        api.clients.getAll(),
+        api.appointments.getAll({
+          startDate: getStartOfWeek().toISOString().split('T')[0],
+          endDate: getEndOfWeek().toISOString().split('T')[0],
+        }).catch(() => []),
+        api.appointments.getAll({
+          startDate: getStartOfMonth().toISOString().split('T')[0],
+          endDate: getEndOfMonth().toISOString().split('T')[0],
+        }).catch(() => [])
       ]);
 
       setAppointments(appointmentsData || []);
       setClients(clientsData || []);
+
+      setStats({
+        totalClients: clientsData?.length || 0,
+        appointmentsToday: (appointmentsData || []).filter(apt => !apt.is_gap).length,
+        appointmentsThisWeek: (weeklyData || []).filter(apt => !apt.is_gap).length,
+        appointmentsThisMonth: (monthlyData || []).filter(apt => !apt.is_gap).length,
+      });
     } catch (error) {
       console.error('Error loading data:', error);
       setAppointments([]);
@@ -35,6 +59,30 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getStartOfWeek = () => {
+    const date = new Date();
+    const day = date.getDay();
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(date.setDate(diff));
+  };
+
+  const getEndOfWeek = () => {
+    const start = getStartOfWeek();
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    return end;
+  };
+
+  const getStartOfMonth = () => {
+    const date = new Date();
+    return new Date(date.getFullYear(), date.getMonth(), 1);
+  };
+
+  const getEndOfMonth = () => {
+    const date = new Date();
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0);
   };
 
   const handleFillGap = (gap: Appointment) => {
@@ -46,29 +94,107 @@ export default function Dashboard() {
     setShowAddModal(true);
   };
 
+  const handleQuickAddToCalendar = () => {
+    setShowQuickAddModal(true);
+  };
+
   const gaps = appointments.filter((apt) => apt.is_gap);
   const scheduled = appointments.filter((apt) => !apt.is_gap && apt.status === 'scheduled');
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="text-slate-500">Loading today's schedule...</div>
+        <div className="text-slate-500">Loading dashboard...</div>
       </div>
     );
   }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900">
-          {selectedDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
-        </h1>
-        <p className="text-slate-600 mt-1">
-          {scheduled.length} appointment{scheduled.length !== 1 ? 's' : ''} today
-          {gaps.length > 0 && ` · ${gaps.length} gap${gaps.length !== 1 ? 's' : ''} to fill`}
-        </p>
+      {/* Header with Quick Actions */}
+      <div className="flex justify-between items-start mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">
+            Dashboard
+          </h1>
+          <p className="text-slate-600 mt-1">
+            {selectedDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          </p>
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={handleQuickAddToCalendar}
+            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition"
+          >
+            <CalendarIcon className="w-4 h-4 mr-2" />
+            Quick Add to Calendar
+          </button>
+          <button
+            onClick={() => navigate('/app/clients')}
+            className="inline-flex items-center px-4 py-2 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition"
+          >
+            <Users className="w-4 h-4 mr-2" />
+            Add Client
+          </button>
+        </div>
       </div>
 
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-600">Total Clients</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">{stats.totalClients}</p>
+            </div>
+            <div className="p-3 bg-blue-100 rounded-lg">
+              <Users className="w-6 h-6 text-blue-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-600">Today</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">{stats.appointmentsToday}</p>
+              <p className="text-xs text-slate-500 mt-1">appointments</p>
+            </div>
+            <div className="p-3 bg-green-100 rounded-lg">
+              <CalendarIcon className="w-6 h-6 text-green-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-600">This Week</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">{stats.appointmentsThisWeek}</p>
+              <p className="text-xs text-slate-500 mt-1">appointments</p>
+            </div>
+            <div className="p-3 bg-purple-100 rounded-lg">
+              <TrendingUp className="w-6 h-6 text-purple-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-600">This Month</p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">{stats.appointmentsThisMonth}</p>
+              <p className="text-xs text-slate-500 mt-1">appointments</p>
+            </div>
+            <div className="p-3 bg-amber-100 rounded-lg">
+              <FileText className="w-6 h-6 text-amber-600" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Available Gaps Alert */}
       {gaps.length > 0 && (
         <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4">
           <div className="flex items-start space-x-3">
@@ -76,35 +202,84 @@ export default function Dashboard() {
             <div>
               <h3 className="font-semibold text-amber-900">Available Slots</h3>
               <p className="text-sm text-amber-700 mt-1">
-                You have {gaps.length} gap{gaps.length !== 1 ? 's' : ''} in your schedule today. These can be filled quickly.
+                You have {gaps.length} gap{gaps.length !== 1 ? 's' : ''} in your schedule today. Fill them quickly to maximize your time!
               </p>
             </div>
           </div>
         </div>
       )}
 
-      <div className="space-y-3">
-        {appointments.length === 0 ? (
-          <div className="bg-white rounded-lg border border-slate-200 p-12 text-center">
-            <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-500">No appointments scheduled for today</p>
-            <button
-              onClick={handleAddAppointment}
-              className="mt-4 inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add Appointment</span>
-            </button>
-          </div>
-        ) : (
-          appointments.map((appointment) => (
-            <AppointmentCard
-              key={appointment.id}
-              appointment={appointment}
-              onFillGap={handleFillGap}
-            />
-          ))
-        )}
+      {/* Today's Schedule */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold text-slate-900">Today's Schedule</h2>
+          <button
+            onClick={handleAddAppointment}
+            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Appointment
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          {appointments.length === 0 ? (
+            <div className="text-center py-12">
+              <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-500">No appointments scheduled for today</p>
+              <button
+                onClick={handleAddAppointment}
+                className="mt-4 inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Appointment</span>
+              </button>
+            </div>
+          ) : (
+            appointments.map((appointment) => (
+              <AppointmentCard
+                key={appointment.id}
+                appointment={appointment}
+                onFillGap={handleFillGap}
+              />
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Quick Actions Panel */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <h2 className="text-xl font-bold text-slate-900 mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <button
+            onClick={() => navigate('/app/conversations')}
+            className="flex flex-col items-center p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition"
+          >
+            <MessageSquare className="w-8 h-8 text-blue-600 mb-2" />
+            <span className="text-sm font-medium text-slate-900">Send Message</span>
+          </button>
+          <button
+            onClick={() => navigate('/app/calendar')}
+            className="flex flex-col items-center p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition"
+          >
+            <CalendarIcon className="w-8 h-8 text-purple-600 mb-2" />
+            <span className="text-sm font-medium text-slate-900">View Calendar</span>
+          </button>
+          <button
+            onClick={() => navigate('/app/clients')}
+            className="flex flex-col items-center p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition"
+          >
+            <Users className="w-8 h-8 text-green-600 mb-2" />
+            <span className="text-sm font-medium text-slate-900">Manage Clients</span>
+          </button>
+          <button
+            onClick={() => navigate('/app/settings')}
+            className="flex flex-col items-center p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition"
+          >
+            <Bell className="w-8 h-8 text-amber-600 mb-2" />
+            <span className="text-sm font-medium text-slate-900">Settings</span>
+          </button>
+        </div>
       </div>
 
       {showAddModal && (
@@ -113,6 +288,17 @@ export default function Dashboard() {
           onClose={() => setShowAddModal(false)}
           onSuccess={() => {
             setShowAddModal(false);
+            loadData();
+          }}
+        />
+      )}
+
+      {showQuickAddModal && (
+        <QuickAddToCalendarModal
+          clients={clients}
+          onClose={() => setShowQuickAddModal(false)}
+          onSuccess={() => {
+            setShowQuickAddModal(false);
             loadData();
           }}
         />
@@ -243,6 +429,162 @@ function AppointmentCard({ appointment, onFillGap }: AppointmentCardProps) {
           <p className="text-sm text-slate-600">{appointment.notes}</p>
         </div>
       )}
+    </div>
+  );
+}
+
+interface QuickAddToCalendarModalProps {
+  clients: Client[];
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+function QuickAddToCalendarModal({ clients, onClose, onSuccess }: QuickAddToCalendarModalProps) {
+  const [formData, setFormData] = useState({
+    clientId: '',
+    title: '',
+    date: new Date().toISOString().split('T')[0],
+    startTime: '',
+    duration: '60',
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const startDateTime = new Date(`${formData.date}T${formData.startTime}`);
+      const endDateTime = new Date(startDateTime.getTime() + parseInt(formData.duration) * 60000);
+
+      await api.appointments.create({
+        clientId: formData.clientId || null,
+        title: formData.title,
+        startTime: startDateTime.toISOString(),
+        endTime: endDateTime.toISOString(),
+        status: 'scheduled',
+      });
+      onSuccess();
+    } catch (err: any) {
+      setError(err.message || 'Failed to create appointment');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-md w-full">
+        <div className="flex items-center justify-between p-6 border-b border-slate-200">
+          <h2 className="text-xl font-bold text-slate-900">Quick Add to Calendar</h2>
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+              {error}
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Client
+            </label>
+            <select
+              value={formData.clientId}
+              onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Select a client (optional)</option>
+              {clients.map((client) => (
+                <option key={client.id} value={client.id}>
+                  {client.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Title *
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              placeholder="e.g., Consultation"
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Date *
+            </label>
+            <input
+              type="date"
+              required
+              value={formData.date}
+              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Start Time *
+            </label>
+            <input
+              type="time"
+              required
+              value={formData.startTime}
+              onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Duration *
+            </label>
+            <select
+              value={formData.duration}
+              onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="15">15 minutes</option>
+              <option value="30">30 minutes</option>
+              <option value="45">45 minutes</option>
+              <option value="60">1 hour</option>
+              <option value="90">1.5 hours</option>
+              <option value="120">2 hours</option>
+            </select>
+          </div>
+
+          <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-200">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            >
+              {loading ? 'Adding...' : 'Add to Calendar'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
@@ -578,7 +920,7 @@ function Calendar({ className }: { className?: string }) {
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth={2}
-        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 2 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
       />
     </svg>
   );
