@@ -255,7 +255,7 @@ export const testStripeConnection = async (req: AuthRequest, res: Response) => {
 
     // Test by fetching account info
     const Stripe = require('stripe');
-    const stripe = new Stripe(secretKey, { apiVersion: '2024-11-20.acacia' });
+    const stripe = new Stripe(secretKey, { apiVersion: '2025-10-29.clover' });
 
     const account = await stripe.accounts.retrieve();
 
