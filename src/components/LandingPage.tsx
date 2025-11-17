@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, MessageSquare, Zap, BarChart3, Users, Clock, CheckCircle, ArrowRight } from 'lucide-react';
+import { Calendar, MessageSquare, Zap, BarChart3, Users, Clock, CheckCircle, ArrowRight, Trophy, Send, UserCog, Bell, Star, Target, Sparkles } from 'lucide-react';
 import api from '../lib/api';
 
 export default function LandingPage() {
@@ -242,93 +242,145 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center max-w-3xl mx-auto">
-          <h1 className="text-5xl md:text-6xl font-bold text-slate-900 mb-6 leading-tight">
-            Manage Your Appointments
-            <span className="block bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Effortlessly
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
+        <div className="text-center max-w-4xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-full mb-8">
+            <Sparkles className="w-4 h-4 text-blue-600" />
+            <span className="text-sm font-medium text-blue-900">All-in-One Business Management Platform</span>
+          </div>
+
+          <h1 className="text-5xl md:text-7xl font-bold text-slate-900 mb-6 leading-tight">
+            Run Your Entire Business
+            <span className="block bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mt-2">
+              From One Platform
             </span>
           </h1>
-          <p className="text-xl text-slate-600 mb-8">
-            The all-in-one platform for service professionals. Schedule appointments, communicate with clients,
-            and automate your workflow.
+          <p className="text-xl md:text-2xl text-slate-600 mb-10 leading-relaxed">
+            Appointments • Messaging • Marketing • Team • Loyalty • Analytics<br/>
+            <span className="text-lg text-slate-500">Everything you need to grow your service business</span>
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <button
               onClick={handleDemoClick}
               disabled={loading}
-              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium text-lg hover:shadow-xl transition disabled:opacity-50 flex items-center justify-center gap-2"
+              className="group px-8 py-5 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white rounded-2xl font-semibold text-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {loading ? 'Loading...' : (
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Loading...
+                </span>
+              ) : (
                 <>
-                  Try Demo <ArrowRight className="w-5 h-5" />
+                  <Sparkles className="w-5 h-5" />
+                  Try Demo - It's Free
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition" />
                 </>
               )}
             </button>
             <button
               onClick={() => setShowAuth('signup')}
-              className="px-8 py-4 bg-white text-blue-600 border-2 border-blue-600 rounded-lg font-medium text-lg hover:bg-blue-50 transition"
+              className="px-8 py-5 bg-white text-slate-900 border-2 border-slate-300 rounded-2xl font-semibold text-lg hover:border-blue-600 hover:text-blue-600 hover:shadow-xl transition-all duration-300"
             >
-              Sign Up Free
+              Get Started Free
             </button>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-slate-600">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-500" />
+              No credit card required
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-500" />
+              Setup in minutes
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-500" />
+              Cancel anytime
+            </div>
           </div>
         </div>
       </section>
 
       {/* Features Grid */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <h2 className="text-3xl font-bold text-center text-slate-900 mb-12">
-          Everything You Need in One Place
-        </h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 bg-slate-50/50 rounded-3xl">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
+            Everything You Need in One Place
+          </h2>
+          <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+            Stop juggling multiple tools. Manage your entire business from a single, beautiful platform.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
             {
               icon: Calendar,
               title: 'Smart Scheduling',
-              description: 'Intelligent appointment management with gap detection and calendar sync.',
+              description: 'Intelligent appointment management with gap detection, recurring bookings, and calendar sync.',
               color: 'from-blue-500 to-blue-600',
-            },
-            {
-              icon: MessageSquare,
-              title: 'Client Communication',
-              description: 'Integrated messaging system to stay connected with your clients.',
-              color: 'from-purple-500 to-purple-600',
-            },
-            {
-              icon: Zap,
-              title: 'Automation',
-              description: 'Automate reminders, follow-ups, and client communication.',
-              color: 'from-amber-500 to-amber-600',
             },
             {
               icon: Users,
               title: 'Client Management',
-              description: 'Keep track of all your clients and their information in one place.',
-              color: 'from-green-500 to-green-600',
+              description: 'Import/export clients, bulk actions, advanced filtering. Keep everything organized.',
+              color: 'from-emerald-500 to-green-600',
+            },
+            {
+              icon: MessageSquare,
+              title: 'Messaging & Templates',
+              description: 'Built-in chat with message templates and quick replies for faster communication.',
+              color: 'from-purple-500 to-purple-600',
+            },
+            {
+              icon: Send,
+              title: 'Marketing Campaigns',
+              description: 'Email & SMS campaigns with analytics. Track opens, clicks, and revenue.',
+              color: 'from-pink-500 to-rose-600',
+            },
+            {
+              icon: Trophy,
+              title: 'Loyalty & Rewards',
+              description: '4-tier loyalty program with points and rewards. Keep clients coming back.',
+              color: 'from-amber-500 to-orange-600',
+            },
+            {
+              icon: UserCog,
+              title: 'Team Management',
+              description: 'Multi-user support with roles, schedules, and performance tracking.',
+              color: 'from-indigo-500 to-blue-600',
             },
             {
               icon: BarChart3,
-              title: 'Analytics',
-              description: 'Gain insights into your business with detailed analytics.',
-              color: 'from-pink-500 to-pink-600',
+              title: 'Advanced Analytics',
+              description: 'Detailed insights into appointments, revenue, and business performance.',
+              color: 'from-cyan-500 to-teal-600',
             },
             {
-              icon: Clock,
-              title: 'Time Tracking',
-              description: 'Track appointments, gaps, and optimize your schedule.',
-              color: 'from-indigo-500 to-indigo-600',
+              icon: Zap,
+              title: 'Smart Automation',
+              description: 'Automated reminders, follow-ups, and workflows. Save hours every week.',
+              color: 'from-yellow-500 to-amber-600',
+            },
+            {
+              icon: Bell,
+              title: 'Notification Center',
+              description: 'Real-time alerts for appointments, messages, and important updates.',
+              color: 'from-violet-500 to-purple-600',
             },
           ].map((feature, index) => (
             <div
               key={index}
-              className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition group"
+              className="group bg-white rounded-2xl p-8 shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 border-transparent hover:border-blue-200"
             >
-              <div className={`w-12 h-12 rounded-lg bg-gradient-to-r ${feature.color} flex items-center justify-center mb-4 group-hover:scale-110 transition`}>
-                <feature.icon className="w-6 h-6 text-white" />
+              <div className={`w-14 h-14 rounded-xl bg-gradient-to-r ${feature.color} flex items-center justify-center mb-5 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg`}>
+                <feature.icon className="w-7 h-7 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-2">{feature.title}</h3>
-              <p className="text-slate-600">{feature.description}</p>
+              <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition">{feature.title}</h3>
+              <p className="text-slate-600 leading-relaxed">{feature.description}</p>
             </div>
           ))}
         </div>
