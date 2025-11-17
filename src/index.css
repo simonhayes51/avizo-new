@@ -27,6 +27,10 @@
     animation: scaleIn 0.2s ease-out;
   }
 
+  .animate-slideIn {
+    animation: slideIn 0.3s ease-out;
+  }
+
   .hover-lift {
     transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
   }
@@ -84,6 +88,17 @@
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 
