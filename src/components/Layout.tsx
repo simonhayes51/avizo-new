@@ -1,5 +1,5 @@
 import { ReactNode, useState } from 'react';
-import { Calendar, MessageSquare, Zap, Settings, LayoutDashboard, Users, CalendarDays, BarChart3, LogOut, Bell, Trophy, Send, UserCog, Menu, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, MessageSquare, Zap, Settings, LayoutDashboard, Users, CalendarDays, BarChart3, LogOut, Bell, Trophy, Send, UserCog, Menu, X, ChevronLeft, ChevronRight, DollarSign } from 'lucide-react';
 import { NavLink, useNavigate, Outlet } from 'react-router-dom';
 import api from '../lib/api';
 
@@ -18,6 +18,7 @@ export default function Layout() {
     { to: '/app/clients', icon: <Users className="w-5 h-5" />, label: 'Clients' },
     { to: '/app/calendar', icon: <CalendarDays className="w-5 h-5" />, label: 'Calendar' },
     { to: '/app/conversations', icon: <MessageSquare className="w-5 h-5" />, label: 'Messages' },
+    { to: '/app/payments', icon: <DollarSign className="w-5 h-5" />, label: 'Payments' },
     { to: '/app/automations', icon: <Zap className="w-5 h-5" />, label: 'Automations' },
     { to: '/app/analytics', icon: <BarChart3 className="w-5 h-5" />, label: 'Analytics' },
     { to: '/app/marketing', icon: <Send className="w-5 h-5" />, label: 'Marketing' },
