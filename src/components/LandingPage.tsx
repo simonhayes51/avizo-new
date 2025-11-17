@@ -224,7 +224,13 @@ export default function LandingPage() {
               Avizo
             </span>
           </div>
-          <div className="flex gap-3">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/pricing')}
+              className="px-4 py-2 text-slate-700 hover:text-slate-900 font-medium transition"
+            >
+              Pricing
+            </button>
             <button
               onClick={() => setShowAuth('login')}
               className="px-4 py-2 text-slate-700 hover:text-slate-900 font-medium transition"
@@ -386,10 +392,95 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Stats Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-3xl p-12 text-white shadow-2xl">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4">Trusted by Thousands</h2>
+            <p className="text-xl text-blue-100">Join the businesses growing with Avizo</p>
+          </div>
+
+          <div className="grid md:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="text-5xl font-bold mb-2">5,000+</div>
+              <div className="text-blue-100">Active Users</div>
+            </div>
+            <div className="text-center">
+              <div className="text-5xl font-bold mb-2">250K+</div>
+              <div className="text-blue-100">Appointments Booked</div>
+            </div>
+            <div className="text-center">
+              <div className="text-5xl font-bold mb-2">98%</div>
+              <div className="text-blue-100">Customer Satisfaction</div>
+            </div>
+            <div className="text-center">
+              <div className="text-5xl font-bold mb-2">4.9 ⭐</div>
+              <div className="text-blue-100">Average Rating</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
+            What Our Users Say
+          </h2>
+          <p className="text-xl text-slate-600">Real stories from real business owners</p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8">
+          {[
+            {
+              quote: "Avizo has completely transformed how I run my driving school. The automated reminders alone save me 10 hours a week!",
+              author: "Sarah Johnson",
+              role: "Driving Instructor",
+              avatar: "SJ",
+              rating: 5,
+            },
+            {
+              quote: "The loyalty program feature is incredible. I've seen a 30% increase in repeat bookings since implementing it.",
+              author: "Michael Chen",
+              role: "Salon Owner",
+              avatar: "MC",
+              rating: 5,
+            },
+            {
+              quote: "Finally, an all-in-one solution that actually works! Managing my team and tracking performance has never been easier.",
+              author: "Emma Davis",
+              role: "Spa Manager",
+              avatar: "ED",
+              rating: 5,
+            },
+          ].map((testimonial, index) => (
+            <div key={index} className="bg-white rounded-2xl p-8 shadow-lg border-2 border-slate-200 hover:border-blue-300 transition">
+              <div className="flex mb-4">
+                {Array.from({ length: testimonial.rating }).map((_, i) => (
+                  <Star key={i} className="w-5 h-5 fill-amber-400 text-amber-400" />
+                ))}
+              </div>
+              <p className="text-slate-700 mb-6 text-lg leading-relaxed italic">
+                "{testimonial.quote}"
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold">
+                  {testimonial.avatar}
+                </div>
+                <div>
+                  <div className="font-bold text-slate-900">{testimonial.author}</div>
+                  <div className="text-sm text-slate-600">{testimonial.role}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* Benefits Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-12 text-white">
-          <h2 className="text-3xl font-bold mb-8">Why Choose Avizo?</h2>
+        <div className="bg-gradient-to-r from-emerald-500 to-green-600 rounded-3xl p-12 text-white shadow-2xl">
+          <h2 className="text-4xl font-bold mb-8 text-center">Why Choose Avizo?</h2>
           <div className="grid md:grid-cols-2 gap-6">
             {[
               'Save time with automated workflows',
@@ -397,11 +488,11 @@ export default function LandingPage() {
               'Fill gaps in your schedule automatically',
               'Communicate seamlessly with clients',
               'Track your business performance',
-              'Sync with your existing calendar',
+              'Grow with marketing campaigns & loyalty programs',
             ].map((benefit, index) => (
               <div key={index} className="flex items-start gap-3">
                 <CheckCircle className="w-6 h-6 flex-shrink-0 mt-0.5" />
-                <span className="text-lg">{benefit}</span>
+                <span className="text-lg font-medium">{benefit}</span>
               </div>
             ))}
           </div>
