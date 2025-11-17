@@ -13,6 +13,9 @@ import NotificationCenter from './components/NotificationCenter';
 import LoyaltyProgram from './components/LoyaltyProgram';
 import MarketingCampaigns from './components/MarketingCampaigns';
 import TeamManagement from './components/TeamManagement';
+import Pricing from './components/Pricing';
+import OnboardingFlow from './components/OnboardingFlow';
+import { ToastProvider } from './components/Toast';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -39,33 +42,39 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route
-          path="/app"
-          element={
-            <ProtectedRoute>
-              <Layout />
-            </ProtectedRoute>
-          }
-        >
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="clients" element={<Clients />} />
-          <Route path="calendar" element={<CalendarView />} />
-          <Route path="conversations" element={<Conversations />} />
-          <Route path="automations" element={<Automations />} />
-          <Route path="analytics" element={<Analytics />} />
-          <Route path="notifications" element={<NotificationCenter />} />
-          <Route path="loyalty" element={<LoyaltyProgram />} />
-          <Route path="marketing" element={<MarketingCampaigns />} />
-          <Route path="team" element={<TeamManagement />} />
-          <Route path="settings" element={<Settings />} />
-          <Route index element={<Navigate to="/app/dashboard" replace />} />
-        </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <ToastProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route
+            path="/app"
+            element={
+              <ProtectedRoute>
+                <>
+                  <Layout />
+                  <OnboardingFlow />
+                </>
+              </ProtectedRoute>
+            }
+          >
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="clients" element={<Clients />} />
+            <Route path="calendar" element={<CalendarView />} />
+            <Route path="conversations" element={<Conversations />} />
+            <Route path="automations" element={<Automations />} />
+            <Route path="analytics" element={<Analytics />} />
+            <Route path="notifications" element={<NotificationCenter />} />
+            <Route path="loyalty" element={<LoyaltyProgram />} />
+            <Route path="marketing" element={<MarketingCampaigns />} />
+            <Route path="team" element={<TeamManagement />} />
+            <Route path="settings" element={<Settings />} />
+            <Route index element={<Navigate to="/app/dashboard" replace />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </ToastProvider>
   );
 }
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BarChart3, Users, Calendar, TrendingUp, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import api from '../lib/api';
+import Tooltip, { HelpButton } from './Tooltip';
 
 interface AnalyticsData {
   totalClients: number;
@@ -63,7 +64,7 @@ export default function Analytics() {
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
             <BarChart3 className="w-8 h-8 text-blue-600" />
@@ -72,7 +73,12 @@ export default function Analytics() {
           <p className="text-slate-600 mt-1">Track your business performance</p>
         </div>
 
-        <div className="flex gap-2 bg-slate-100 rounded-lg p-1">
+        <div className="flex items-center gap-3">
+          <HelpButton
+            title="Analytics Help"
+            description={`Track your business performance with detailed analytics.\n\nTotal Clients: Total number of clients in your database.\n\nTotal Appointments: Number of appointments in the selected time period.\n\nAvg Per Day: Average number of appointments per day.\n\nGap Fill Rate: Percentage of available appointment slots that have been filled.`}
+          />
+          <div className="flex gap-2 bg-slate-100 rounded-lg p-1">
           <button
             onClick={() => setDateRange('7days')}
             className={`px-4 py-2 rounded-lg transition ${
@@ -103,6 +109,7 @@ export default function Analytics() {
           >
             All Time
           </button>
+          </div>
         </div>
       </div>
 

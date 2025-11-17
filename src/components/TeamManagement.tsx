@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Users, UserPlus, Mail, Phone, Calendar, Shield, Clock, TrendingUp, Award, X, Edit2, Trash2, MoreVertical } from 'lucide-react';
+import Tooltip, { HelpButton } from './Tooltip';
 
 interface TeamMember {
   id: string;
@@ -179,13 +180,19 @@ export default function TeamManagement() {
           </div>
         </div>
 
-        <button
-          onClick={() => setShowAddMember(true)}
-          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2 hover:shadow-lg transition"
-        >
-          <UserPlus className="w-5 h-5" />
-          Add Team Member
-        </button>
+        <div className="flex items-center gap-3">
+          <HelpButton
+            title="Team Management Help"
+            description={`Manage your team members, their schedules, and track performance.\n\nRoles:\n- Admin: Full access to all features and settings\n- Manager: Can manage schedules and view reports\n- Staff: Can view their own schedule and appointments\n\nSchedule: Set weekly availability for each team member to ensure proper coverage.\n\nPerformance: Track appointments, ratings, and revenue per team member.`}
+          />
+          <button
+            onClick={() => setShowAddMember(true)}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2 hover:shadow-lg transition"
+          >
+            <UserPlus className="w-5 h-5" />
+            Add Team Member
+          </button>
+        </div>
       </div>
 
       {/* Stats */}

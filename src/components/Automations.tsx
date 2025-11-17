@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Plus, Zap, Edit2, Trash2, ToggleLeft, ToggleRight, Clock } from 'lucide-react';
+import { Plus, Zap, Edit2, Trash2, ToggleLeft, ToggleRight, Clock, X } from 'lucide-react';
 import api from '../lib/api';
 import { Automation } from '../types';
+import EmptyState from './EmptyState';
+import Tooltip, { HelpButton } from './Tooltip';
+import { useToast } from './Toast';
 
 export default function Automations() {
   const [automations, setAutomations] = useState<Automation[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingAutomation, setEditingAutomation] = useState<Automation | null>(null);
   const [loading, setLoading] = useState(true);
+  const { showToast } = useToast();
 
   useEffect(() => {
     loadAutomations();
@@ -60,29 +64,35 @@ export default function Automations() {
           <h1 className="text-3xl font-bold text-slate-900">Automations</h1>
           <p className="text-slate-600 mt-1">Set up automatic messages and workflows</p>
         </div>
-        <button
-          onClick={() => {
-            setEditingAutomation(null);
-            setShowForm(true);
-          }}
-          className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-        >
-          <Plus className="w-5 h-5" />
-          <span>New Automation</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <HelpButton
+            title="Automations Help"
+            description={`Save time by automating repetitive tasks and messages.\n\nBefore Appointment: Send reminder messages hours before appointments to reduce no-shows.\n\nAfter Appointment: Send thank-you messages or request reviews after appointments.\n\nOn Cancellation: Automatically notify when appointments are cancelled.\n\nMessage Templates: Use variables like {{client_name}}, {{date}}, and {{time}} to personalize messages.`}
+          />
+          <button
+            onClick={() => {
+              setEditingAutomation(null);
+              setShowForm(true);
+            }}
+            className="inline-flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all font-medium"
+          >
+            <Plus className="w-5 h-5" />
+            <span>New Automation</span>
+          </button>
+        </div>
       </div>
 
       {automations.length === 0 ? (
-        <div className="bg-white rounded-lg border border-slate-200 p-12 text-center">
-          <Zap className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-500 mb-4">No automations set up yet</p>
-          <button
-            onClick={() => setShowForm(true)}
-            className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create Your First Automation</span>
-          </button>
+        <div className="bg-white rounded-lg border border-slate-200">
+          <EmptyState
+            icon={Zap}
+            title="No Automations Yet"
+            description="Save time by setting up automatic messages for appointment reminders, follow-ups, and more. Your clients will appreciate the timely communication!"
+            action={{
+              label: "Create Your First Automation",
+              onClick: () => setShowForm(true),
+            }}
+          />
         </div>
       ) : (
         <div className="grid gap-4">
@@ -275,8 +285,9 @@ function AutomationForm({ automation, onClose, onSave }: AutomationFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
               Trigger Type *
+              <Tooltip content="Choose when this automation should run" />
             </label>
             <select
               value={triggerType}
@@ -305,8 +316,9 @@ function AutomationForm({ automation, onClose, onSave }: AutomationFormProps) {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
               Message Template *
+              <Tooltip content="Create your message using variables to personalize for each client" />
             </label>
             <textarea
               value={messageTemplate}
@@ -341,20 +353,3 @@ function AutomationForm({ automation, onClose, onSave }: AutomationFormProps) {
   );
 }
 
-function X({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M6 18L18 6M6 6l12 12"
-      />
-    </svg>
-  );
-}
