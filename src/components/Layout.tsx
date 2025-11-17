@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { Calendar, MessageSquare, Zap, Settings, LayoutDashboard, Users, CalendarDays, BarChart3, LogOut } from 'lucide-react';
+import { Calendar, MessageSquare, Zap, Settings, LayoutDashboard, Users, CalendarDays, BarChart3, LogOut, Bell, Trophy, Send, UserCog } from 'lucide-react';
 import { NavLink, useNavigate, Outlet } from 'react-router-dom';
 import api from '../lib/api';
 
@@ -53,6 +53,26 @@ export default function Layout() {
                 to="/app/analytics"
                 icon={<BarChart3 className="w-5 h-5" />}
                 label="Analytics"
+              />
+              <NavButton
+                to="/app/marketing"
+                icon={<Send className="w-5 h-5" />}
+                label="Marketing"
+              />
+              <NavButton
+                to="/app/loyalty"
+                icon={<Trophy className="w-5 h-5" />}
+                label="Loyalty"
+              />
+              <NavButton
+                to="/app/team"
+                icon={<UserCog className="w-5 h-5" />}
+                label="Team"
+              />
+              <NavButton
+                to="/app/notifications"
+                icon={<Bell className="w-5 h-5" />}
+                label="Alerts"
               />
               <NavButton
                 to="/app/settings"

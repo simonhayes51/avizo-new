@@ -9,6 +9,10 @@ import Settings from './components/Settings';
 import Clients from './components/Clients';
 import CalendarView from './components/CalendarView';
 import Analytics from './components/Analytics';
+import NotificationCenter from './components/NotificationCenter';
+import LoyaltyProgram from './components/LoyaltyProgram';
+import MarketingCampaigns from './components/MarketingCampaigns';
+import TeamManagement from './components/TeamManagement';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -52,6 +56,10 @@ function App() {
           <Route path="conversations" element={<Conversations />} />
           <Route path="automations" element={<Automations />} />
           <Route path="analytics" element={<Analytics />} />
+          <Route path="notifications" element={<NotificationCenter />} />
+          <Route path="loyalty" element={<LoyaltyProgram />} />
+          <Route path="marketing" element={<MarketingCampaigns />} />
+          <Route path="team" element={<TeamManagement />} />
           <Route path="settings" element={<Settings />} />
           <Route index element={<Navigate to="/app/dashboard" replace />} />
         </Route>
