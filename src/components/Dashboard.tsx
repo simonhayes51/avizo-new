@@ -103,8 +103,41 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-slate-500">Loading dashboard...</div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <div className="h-10 bg-gradient-to-r from-slate-200 to-slate-300 rounded-lg w-64 mb-2 animate-pulse" />
+          <div className="h-5 bg-slate-200 rounded w-48 animate-pulse" />
+        </div>
+
+        {/* Stats Skeleton */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="bg-white rounded-2xl p-6 border-2 border-slate-200">
+              <div className="h-4 bg-slate-200 rounded w-24 mb-4 animate-pulse" />
+              <div className="h-8 bg-slate-300 rounded w-16 animate-pulse" />
+            </div>
+          ))}
+        </div>
+
+        {/* Content Skeleton */}
+        <div className="grid lg:grid-cols-2 gap-6">
+          <div className="bg-white rounded-2xl p-6 border-2 border-slate-200">
+            <div className="h-6 bg-slate-200 rounded w-40 mb-6 animate-pulse" />
+            <div className="space-y-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-20 bg-slate-100 rounded-xl animate-pulse" />
+              ))}
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl p-6 border-2 border-slate-200">
+            <div className="h-6 bg-slate-200 rounded w-40 mb-6 animate-pulse" />
+            <div className="space-y-4">
+              {[1, 2].map(i => (
+                <div key={i} className="h-24 bg-slate-100 rounded-xl animate-pulse" />
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -112,12 +145,12 @@ export default function Dashboard() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header with Quick Actions */}
-      <div className="flex justify-between items-start mb-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">
-            Dashboard
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 via-blue-900 to-purple-900 bg-clip-text text-transparent">
+            Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 18 ? 'Afternoon' : 'Evening'}!
           </h1>
-          <p className="text-slate-600 mt-1">
+          <p className="text-slate-600 mt-2 text-lg">
             {selectedDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
         </div>
@@ -125,70 +158,71 @@ export default function Dashboard() {
         <div className="flex gap-3">
           <button
             onClick={handleQuickAddToCalendar}
-            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition"
+            className="inline-flex items-center px-5 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-medium hover:shadow-xl hover:scale-105 transition-all duration-200"
           >
-            <CalendarIcon className="w-4 h-4 mr-2" />
-            Quick Add to Calendar
+            <CalendarIcon className="w-5 h-5 mr-2" />
+            Quick Add
           </button>
           <button
             onClick={() => navigate('/app/clients')}
-            className="inline-flex items-center px-4 py-2 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition"
+            className="inline-flex items-center px-5 py-3 border-2 border-slate-300 text-slate-700 rounded-xl font-medium hover:bg-slate-50 hover:border-slate-400 transition-all duration-200"
           >
-            <Users className="w-4 h-4 mr-2" />
-            Add Client
+            <Users className="w-5 h-5 mr-2" />
+            New Client
           </button>
         </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <div className="flex items-center justify-between">
+        <div className="group bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg hover:shadow-2xl p-6 text-white transition-all duration-300 hover:scale-105 cursor-pointer">
+          <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-600">Total Clients</p>
-              <p className="text-3xl font-bold text-slate-900 mt-2">{stats.totalClients}</p>
+              <p className="text-blue-100 text-sm font-medium mb-2">Total Clients</p>
+              <p className="text-5xl font-bold">{stats.totalClients}</p>
+              <p className="text-blue-100 text-xs mt-2">All time</p>
             </div>
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <Users className="w-6 h-6 text-blue-600" />
+            <div className="p-3 bg-white/20 backdrop-blur rounded-xl group-hover:bg-white/30 transition">
+              <Users className="w-7 h-7" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <div className="flex items-center justify-between">
+        <div className="group bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl shadow-lg hover:shadow-2xl p-6 text-white transition-all duration-300 hover:scale-105 cursor-pointer">
+          <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-600">Today</p>
-              <p className="text-3xl font-bold text-slate-900 mt-2">{stats.appointmentsToday}</p>
-              <p className="text-xs text-slate-500 mt-1">appointments</p>
+              <p className="text-emerald-100 text-sm font-medium mb-2">Today</p>
+              <p className="text-5xl font-bold">{stats.appointmentsToday}</p>
+              <p className="text-emerald-100 text-xs mt-2">appointments</p>
             </div>
-            <div className="p-3 bg-green-100 rounded-lg">
-              <CalendarIcon className="w-6 h-6 text-green-600" />
+            <div className="p-3 bg-white/20 backdrop-blur rounded-xl group-hover:bg-white/30 transition">
+              <CalendarIcon className="w-7 h-7" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <div className="flex items-center justify-between">
+        <div className="group bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl shadow-lg hover:shadow-2xl p-6 text-white transition-all duration-300 hover:scale-105 cursor-pointer">
+          <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-600">This Week</p>
-              <p className="text-3xl font-bold text-slate-900 mt-2">{stats.appointmentsThisWeek}</p>
-              <p className="text-xs text-slate-500 mt-1">appointments</p>
+              <p className="text-violet-100 text-sm font-medium mb-2">This Week</p>
+              <p className="text-5xl font-bold">{stats.appointmentsThisWeek}</p>
+              <p className="text-violet-100 text-xs mt-2">appointments</p>
             </div>
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <TrendingUp className="w-6 h-6 text-purple-600" />
+            <div className="p-3 bg-white/20 backdrop-blur rounded-xl group-hover:bg-white/30 transition">
+              <TrendingUp className="w-7 h-7" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <div className="flex items-center justify-between">
+        <div className="group bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl shadow-lg hover:shadow-2xl p-6 text-white transition-all duration-300 hover:scale-105 cursor-pointer">
+          <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-600">This Month</p>
-              <p className="text-3xl font-bold text-slate-900 mt-2">{stats.appointmentsThisMonth}</p>
-              <p className="text-xs text-slate-500 mt-1">appointments</p>
+              <p className="text-amber-100 text-sm font-medium mb-2">This Month</p>
+              <p className="text-5xl font-bold">{stats.appointmentsThisMonth}</p>
+              <p className="text-amber-100 text-xs mt-2">appointments</p>
             </div>
-            <div className="p-3 bg-amber-100 rounded-lg">
-              <FileText className="w-6 h-6 text-amber-600" />
+            <div className="p-3 bg-white/20 backdrop-blur rounded-xl group-hover:bg-white/30 transition">
+              <FileText className="w-7 h-7" />
             </div>
           </div>
         </div>
