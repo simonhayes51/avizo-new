@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Mail, MessageSquare, Send, Users, TrendingUp, Eye, MousePointerClick, DollarSign, Plus, X, Calendar, Target, Zap } from 'lucide-react';
+import Tooltip, { HelpButton } from './Tooltip';
 
 interface Campaign {
   id: string;
@@ -151,13 +152,19 @@ export default function MarketingCampaigns() {
           </div>
         </div>
 
-        <button
-          onClick={() => setShowNewCampaign(true)}
-          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2 hover:shadow-lg transition"
-        >
-          <Plus className="w-5 h-5" />
-          New Campaign
-        </button>
+        <div className="flex items-center gap-3">
+          <HelpButton
+            title="Marketing Campaigns Help"
+            description={`Create and manage email & SMS campaigns to engage your clients.\n\nEmail Campaigns: Perfect for detailed promotions, newsletters, and rich content with images and links.\n\nSMS Campaigns: Great for time-sensitive messages, appointment reminders, and quick updates.\n\nTemplates: Use pre-built templates to get started quickly.\n\nAnalytics: Track open rates, click rates, and revenue to measure campaign success.`}
+          />
+          <button
+            onClick={() => setShowNewCampaign(true)}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2 hover:shadow-lg transition"
+          >
+            <Plus className="w-5 h-5" />
+            New Campaign
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -181,7 +188,10 @@ export default function MarketingCampaigns() {
         <div className="bg-white border-2 border-slate-200 rounded-xl p-6 hover-lift">
           <div className="flex items-center gap-3 mb-2">
             <Eye className="w-5 h-5 text-green-600" />
-            <span className="text-sm text-slate-600">Avg Open Rate</span>
+            <span className="text-sm text-slate-600 flex items-center gap-1">
+              Avg Open Rate
+              <Tooltip content="Percentage of recipients who opened your campaigns" />
+            </span>
           </div>
           <div className="text-3xl font-bold text-slate-900">{stats.avgOpenRate.toFixed(0)}%</div>
         </div>
@@ -189,7 +199,10 @@ export default function MarketingCampaigns() {
         <div className="bg-white border-2 border-slate-200 rounded-xl p-6 hover-lift">
           <div className="flex items-center gap-3 mb-2">
             <MousePointerClick className="w-5 h-5 text-amber-600" />
-            <span className="text-sm text-slate-600">Avg Click Rate</span>
+            <span className="text-sm text-slate-600 flex items-center gap-1">
+              Avg Click Rate
+              <Tooltip content="Percentage of people who clicked links after opening" />
+            </span>
           </div>
           <div className="text-3xl font-bold text-slate-900">{stats.avgClickRate.toFixed(0)}%</div>
         </div>
@@ -197,7 +210,10 @@ export default function MarketingCampaigns() {
         <div className="bg-white border-2 border-slate-200 rounded-xl p-6 hover-lift">
           <div className="flex items-center gap-3 mb-2">
             <DollarSign className="w-5 h-5 text-emerald-600" />
-            <span className="text-sm text-slate-600">Revenue</span>
+            <span className="text-sm text-slate-600 flex items-center gap-1">
+              Revenue
+              <Tooltip content="Total revenue generated from campaign conversions" />
+            </span>
           </div>
           <div className="text-3xl font-bold text-slate-900">${stats.totalRevenue.toLocaleString()}</div>
         </div>

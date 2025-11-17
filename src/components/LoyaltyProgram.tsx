@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Trophy, Star, Gift, TrendingUp, Award, Crown, Zap, Users, Plus, X, Edit2 } from 'lucide-react';
+import Tooltip, { HelpButton } from './Tooltip';
 
 interface LoyaltyTier {
   id: string;
@@ -186,13 +187,19 @@ export default function LoyaltyProgram() {
           </div>
         </div>
 
-        <button
-          onClick={() => setShowAddReward(true)}
-          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2 hover:shadow-lg transition"
-        >
-          <Plus className="w-5 h-5" />
-          Add Reward
-        </button>
+        <div className="flex items-center gap-3">
+          <HelpButton
+            title="Loyalty Program Help"
+            description={`Reward your best clients and encourage repeat business.\n\nTiers: Automatically group clients into Bronze, Silver, Gold, or Platinum tiers based on points earned.\n\nPoints: Clients earn points with each purchase. Higher tiers earn points faster!\n\nRewards: Create rewards that clients can redeem with their points (discounts, free services, etc.).\n\nTop Clients: Track your most loyal clients and their activity.`}
+          />
+          <button
+            onClick={() => setShowAddReward(true)}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2 hover:shadow-lg transition"
+          >
+            <Plus className="w-5 h-5" />
+            Add Reward
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}

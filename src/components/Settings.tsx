@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Save, Link2, Calendar as CalendarIcon, Phone, Building2 } from 'lucide-react';
 import api from '../lib/api';
 import IntegrationsSettings from './IntegrationsSettings';
+import Tooltip, { HelpButton } from './Tooltip';
+import { useToast } from './Toast';
 
 interface Profile {
   id: string;
@@ -24,6 +26,7 @@ export default function Settings() {
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const { showToast } = useToast();
 
   useEffect(() => {
     loadSettings();
@@ -48,6 +51,12 @@ export default function Settings() {
   const saveProfile = async () => {
     if (!profile) return;
 
+    // Validation
+    if (!profile.business_name.trim()) {
+      showToast('Please enter a business name', 'error');
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -58,10 +67,10 @@ export default function Settings() {
         timezone: profile.timezone,
       });
 
-      alert('Settings saved successfully');
+      showToast('Settings saved successfully', 'success');
     } catch (error) {
       console.error('Error saving profile:', error);
-      alert('Failed to save settings. Please try again.');
+      showToast('Failed to save settings. Please try again.', 'error');
     } finally {
       setSaving(false);
     }
@@ -77,7 +86,13 @@ export default function Settings() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-3xl font-bold text-slate-900 mb-8">Settings</h1>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold text-slate-900">Settings</h1>
+        <HelpButton
+          title="Settings Help"
+          description={`Configure your business profile and integrations here.\n\nBusiness Profile: Update your business information, contact details, and timezone preferences.\n\nIntegrations: Connect your calendar, messaging, and video call services to streamline your workflow.`}
+        />
+      </div>
 
       {/* Tabs */}
       <div className="border-b border-gray-200 mb-8">
@@ -129,8 +144,9 @@ export default function Settings() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
                 Business Type
+                <Tooltip content="Select your industry to customize features and templates for your business" />
               </label>
               <select
                 value={profile?.business_type || 'general'}
@@ -169,8 +185,9 @@ export default function Settings() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
                 Timezone
+                <Tooltip content="Set your local timezone to ensure appointments display at the correct times" />
               </label>
               <select
                 value={profile?.timezone || 'Europe/London'}
