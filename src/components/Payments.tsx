@@ -28,6 +28,9 @@ interface InvoiceItem {
 export default function Payments() {
   const [activeTab, setActiveTab] = useState<'overview' | 'invoices' | 'payments'>('overview');
   const [showNewInvoice, setShowNewInvoice] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [showInvoiceDetail, setShowInvoiceDetail] = useState(false);
+  const [showSendModal, setShowSendModal] = useState(false);
   const { showToast } = useToast();
 
   // Sample data - would come from API
@@ -87,6 +90,31 @@ export default function Payments() {
       const month = new Date().getMonth();
       return i.date.getMonth() === month;
     }).reduce((sum, i) => sum + i.total, 0),
+  };
+
+  const handleViewInvoice = (invoice: Invoice) => {
+    setSelectedInvoice(invoice);
+    setShowInvoiceDetail(true);
+  };
+
+  const handleSendInvoice = (invoice: Invoice) => {
+    setSelectedInvoice(invoice);
+    setShowSendModal(true);
+  };
+
+  const handleDownloadInvoice = (invoice: Invoice) => {
+    showToast(`Downloading ${invoice.invoiceNumber}...`, 'info');
+    // In real app, would trigger PDF download
+    setTimeout(() => {
+      showToast(`${invoice.invoiceNumber} downloaded successfully!`, 'success');
+    }, 1500);
+  };
+
+  const handleSendEmail = () => {
+    if (selectedInvoice) {
+      showToast(`Invoice sent to ${selectedInvoice.clientName}!`, 'success');
+      setShowSendModal(false);
+    }
   };
 
   const getStatusBadge = (status: Invoice['status']) => {
@@ -248,14 +276,26 @@ export default function Payments() {
                     </div>
                     {getStatusBadge(invoice.status)}
                     <div className="flex gap-2">
-                      <button className="p-2 hover:bg-slate-100 rounded-lg transition" title="View">
-                        <Eye className="w-5 h-5 text-slate-600" />
+                      <button
+                        onClick={() => handleViewInvoice(invoice)}
+                        className="p-2 hover:bg-blue-50 rounded-lg transition"
+                        title="View Invoice"
+                      >
+                        <Eye className="w-5 h-5 text-blue-600" />
                       </button>
-                      <button className="p-2 hover:bg-slate-100 rounded-lg transition" title="Send">
-                        <Send className="w-5 h-5 text-slate-600" />
+                      <button
+                        onClick={() => handleSendInvoice(invoice)}
+                        className="p-2 hover:bg-green-50 rounded-lg transition"
+                        title="Send Invoice"
+                      >
+                        <Send className="w-5 h-5 text-green-600" />
                       </button>
-                      <button className="p-2 hover:bg-slate-100 rounded-lg transition" title="Download">
-                        <Download className="w-5 h-5 text-slate-600" />
+                      <button
+                        onClick={() => handleDownloadInvoice(invoice)}
+                        className="p-2 hover:bg-purple-50 rounded-lg transition"
+                        title="Download PDF"
+                      >
+                        <Download className="w-5 h-5 text-purple-600" />
                       </button>
                     </div>
                   </div>
@@ -334,14 +374,26 @@ export default function Payments() {
                       <td className="py-4 px-4">{getStatusBadge(invoice.status)}</td>
                       <td className="py-4 px-4">
                         <div className="flex gap-2">
-                          <button className="p-2 hover:bg-slate-100 rounded-lg transition" title="View">
-                            <Eye className="w-5 h-5 text-slate-600" />
+                          <button
+                            onClick={() => handleViewInvoice(invoice)}
+                            className="p-2 hover:bg-blue-50 rounded-lg transition"
+                            title="View Invoice"
+                          >
+                            <Eye className="w-5 h-5 text-blue-600" />
                           </button>
-                          <button className="p-2 hover:bg-slate-100 rounded-lg transition" title="Send">
-                            <Send className="w-5 h-5 text-slate-600" />
+                          <button
+                            onClick={() => handleSendInvoice(invoice)}
+                            className="p-2 hover:bg-green-50 rounded-lg transition"
+                            title="Send Invoice"
+                          >
+                            <Send className="w-5 h-5 text-green-600" />
                           </button>
-                          <button className="p-2 hover:bg-slate-100 rounded-lg transition" title="Download">
-                            <Download className="w-5 h-5 text-slate-600" />
+                          <button
+                            onClick={() => handleDownloadInvoice(invoice)}
+                            className="p-2 hover:bg-purple-50 rounded-lg transition"
+                            title="Download PDF"
+                          >
+                            <Download className="w-5 h-5 text-purple-600" />
                           </button>
                         </div>
                       </td>
@@ -400,6 +452,184 @@ export default function Payments() {
                 className="px-6 py-3 bg-slate-900 text-white rounded-xl font-semibold hover:bg-slate-800 transition"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Invoice Detail Modal */}
+      {showInvoiceDetail && selectedInvoice && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Invoice Header */}
+            <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-8 text-white">
+              <div className="flex items-start justify-between mb-6">
+                <div>
+                  <h2 className="text-3xl font-bold mb-2">Invoice</h2>
+                  <div className="text-green-100">{selectedInvoice.invoiceNumber}</div>
+                </div>
+                <button
+                  onClick={() => setShowInvoiceDetail(false)}
+                  className="p-2 hover:bg-white/20 rounded-lg transition"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="grid md:grid-cols-2 gap-6 text-sm">
+                <div>
+                  <div className="text-green-100 mb-1">Bill To:</div>
+                  <div className="text-xl font-semibold">{selectedInvoice.clientName}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-green-100 mb-1">Date Issued:</div>
+                  <div className="font-semibold">{selectedInvoice.date.toLocaleDateString()}</div>
+                  <div className="text-green-100 mt-2">Due Date:</div>
+                  <div className="font-semibold">{selectedInvoice.dueDate.toLocaleDateString()}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Invoice Body */}
+            <div className="p-8">
+              {/* Line Items */}
+              <div className="mb-6">
+                <h3 className="font-bold text-lg text-slate-900 mb-4">Items</h3>
+                <table className="w-full">
+                  <thead className="border-b-2 border-slate-200">
+                    <tr>
+                      <th className="text-left py-3 text-slate-700 font-semibold">Description</th>
+                      <th className="text-center py-3 text-slate-700 font-semibold">Qty</th>
+                      <th className="text-right py-3 text-slate-700 font-semibold">Price</th>
+                      <th className="text-right py-3 text-slate-700 font-semibold">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {selectedInvoice.items.map((item, index) => (
+                      <tr key={index}>
+                        <td className="py-3 text-slate-900">{item.description}</td>
+                        <td className="py-3 text-center text-slate-600">{item.quantity}</td>
+                        <td className="py-3 text-right text-slate-600">${item.price.toFixed(2)}</td>
+                        <td className="py-3 text-right font-semibold text-slate-900">${item.total.toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Totals */}
+              <div className="border-t-2 border-slate-200 pt-4">
+                <div className="max-w-xs ml-auto space-y-2">
+                  <div className="flex justify-between text-slate-700">
+                    <span>Subtotal:</span>
+                    <span className="font-semibold">${selectedInvoice.subtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-700">
+                    <span>Tax (20%):</span>
+                    <span className="font-semibold">${selectedInvoice.tax.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-xl font-bold text-slate-900 border-t-2 border-slate-200 pt-2">
+                    <span>Total:</span>
+                    <span className="text-green-600">${selectedInvoice.total.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status Badge */}
+              <div className="mt-6 flex items-center justify-between">
+                <div className="text-sm text-slate-600">
+                  Status: {getStatusBadge(selectedInvoice.status)}
+                </div>
+                {selectedInvoice.paymentMethod && (
+                  <div className="text-sm text-slate-600">
+                    Payment Method: <span className="font-semibold">{selectedInvoice.paymentMethod}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 mt-8">
+                <button
+                  onClick={() => {
+                    handleDownloadInvoice(selectedInvoice);
+                    setShowInvoiceDetail(false);
+                  }}
+                  className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition flex items-center justify-center gap-2"
+                >
+                  <Download className="w-5 h-5" />
+                  Download PDF
+                </button>
+                <button
+                  onClick={() => {
+                    setShowInvoiceDetail(false);
+                    handleSendInvoice(selectedInvoice);
+                  }}
+                  className="flex-1 px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition flex items-center justify-center gap-2"
+                >
+                  <Send className="w-5 h-5" />
+                  Send to Client
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Send Invoice Modal */}
+      {showSendModal && selectedInvoice && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-lg w-full p-8 animate-scaleIn">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center">
+                <Send className="w-7 h-7 text-green-600" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-slate-900">Send Invoice</h3>
+                <p className="text-slate-600">{selectedInvoice.invoiceNumber}</p>
+              </div>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Send To</label>
+                <div className="px-4 py-3 bg-slate-50 rounded-lg border border-slate-200">
+                  <div className="font-semibold text-slate-900">{selectedInvoice.clientName}</div>
+                  <div className="text-sm text-slate-600">client@example.com</div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Subject</label>
+                <input
+                  type="text"
+                  defaultValue={`Invoice ${selectedInvoice.invoiceNumber} from Your Business`}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Message</label>
+                <textarea
+                  rows={4}
+                  defaultValue={`Hi ${selectedInvoice.clientName},\n\nThank you for your business! Please find attached invoice ${selectedInvoice.invoiceNumber} for $${selectedInvoice.total.toFixed(2)}.\n\nPayment is due by ${selectedInvoice.dueDate.toLocaleDateString()}.\n\nBest regards`}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowSendModal(false)}
+                className="flex-1 px-6 py-3 border-2 border-slate-300 text-slate-700 rounded-xl font-semibold hover:bg-slate-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSendEmail}
+                className="flex-1 px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition flex items-center justify-center gap-2"
+              >
+                <Send className="w-5 h-5" />
+                Send Invoice
               </button>
             </div>
           </div>
