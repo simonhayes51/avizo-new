@@ -15,6 +15,7 @@ import MarketingCampaigns from './components/MarketingCampaigns';
 import TeamManagement from './components/TeamManagement';
 import Pricing from './components/Pricing';
 import OnboardingFlow from './components/OnboardingFlow';
+import Payments from './components/Payments';
 import { ToastProvider } from './components/Toast';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -64,6 +65,7 @@ function App() {
             <Route path="conversations" element={<Conversations />} />
             <Route path="automations" element={<Automations />} />
             <Route path="analytics" element={<Analytics />} />
+            <Route path="payments" element={<Payments />} />
             <Route path="notifications" element={<NotificationCenter />} />
             <Route path="loyalty" element={<LoyaltyProgram />} />
             <Route path="marketing" element={<MarketingCampaigns />} />
