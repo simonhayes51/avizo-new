@@ -3,6 +3,7 @@ import { Clock, MapPin, User, AlertCircle, Plus, X, Calendar as CalendarIcon, Us
 import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import { Appointment, Client } from '../types';
+import AIInsights from './AIInsights';
 
 export default function Dashboard() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -280,6 +281,9 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {/* AI Insights */}
+      <AIInsights clients={clients} appointments={appointments} />
 
       {/* Quick Actions Panel */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
