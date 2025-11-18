@@ -18,6 +18,7 @@ export default function Clients() {
   const [clients, setClients] = useState<Client[]>([]);
   const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
@@ -78,6 +79,7 @@ export default function Clients() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSubmitting(true);
     try {
       if (editingClient) {
         await api.clients.update(editingClient.id, formData);
@@ -105,6 +107,8 @@ export default function Clients() {
       } else {
         setError(detailedError);
       }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -600,9 +604,10 @@ export default function Clients() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition"
+                  disabled={submitting}
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {editingClient ? 'Save Changes' : 'Add Client'}
+                  {submitting ? 'Saving...' : (editingClient ? 'Save Changes' : 'Add Client')}
                 </button>
               </div>
             </form>
