@@ -77,6 +77,8 @@ class ApiClient {
       localStorage.setItem('auth_token', result.token);
       localStorage.setItem('user_id', result.userId);
       localStorage.setItem('is_demo', 'true');
+      // Clear onboarding flag so demo guide shows for new demo sessions
+      localStorage.removeItem('onboarding_completed');
       return result;
     },
 
