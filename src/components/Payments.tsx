@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { DollarSign, CreditCard, Plus, Search, Download, Filter, Eye, Send, CheckCircle, Clock, XCircle, Calendar, User } from 'lucide-react';
+import { DollarSign, CreditCard, Plus, Search, Download, Filter, Eye, Send, CheckCircle, Clock, XCircle, Calendar, User, X } from 'lucide-react';
 import { HelpButton } from './Tooltip';
 import { useToast } from './Toast';
 
@@ -103,11 +103,107 @@ export default function Payments() {
   };
 
   const handleDownloadInvoice = (invoice: Invoice) => {
-    showToast(`Downloading ${invoice.invoiceNumber}...`, 'info');
-    // In real app, would trigger PDF download
+    showToast(`Generating ${invoice.invoiceNumber}...`, 'info');
+
+    // Generate invoice HTML for PDF
+    const invoiceHTML = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 40px; }
+          .header { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 30px; margin: -40px -40px 30px -40px; }
+          .invoice-number { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+          .client-info { margin-bottom: 30px; }
+          table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+          th { background: #f1f5f9; padding: 12px; text-align: left; border-bottom: 2px solid #e2e8f0; }
+          td { padding: 12px; border-bottom: 1px solid #f1f5f9; }
+          .totals { margin-top: 20px; text-align: right; }
+          .totals-table { width: 300px; margin-left: auto; }
+          .total-row { font-size: 18px; font-weight: bold; border-top: 2px solid #e2e8f0; }
+          .status-badge { display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: bold; }
+          .status-paid { background: #d1fae5; color: #065f46; }
+          .status-pending { background: #fef3c7; color: #92400e; }
+          .status-overdue { background: #fee2e2; color: #991b1b; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="invoice-number">INVOICE</div>
+          <div>${invoice.invoiceNumber}</div>
+        </div>
+
+        <div class="client-info">
+          <strong>Bill To:</strong><br/>
+          ${invoice.clientName}<br/>
+          <br/>
+          <strong>Date Issued:</strong> ${invoice.date.toLocaleDateString()}<br/>
+          <strong>Due Date:</strong> ${invoice.dueDate.toLocaleDateString()}
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th style="text-align: center;">Quantity</th>
+              <th style="text-align: right;">Price</th>
+              <th style="text-align: right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${invoice.items.map(item => `
+              <tr>
+                <td>${item.description}</td>
+                <td style="text-align: center;">${item.quantity}</td>
+                <td style="text-align: right;">$${item.price.toFixed(2)}</td>
+                <td style="text-align: right;">$${item.total.toFixed(2)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+
+        <div class="totals">
+          <table class="totals-table">
+            <tr>
+              <td>Subtotal:</td>
+              <td style="text-align: right;"><strong>$${invoice.subtotal.toFixed(2)}</strong></td>
+            </tr>
+            <tr>
+              <td>Tax (20%):</td>
+              <td style="text-align: right;"><strong>$${invoice.tax.toFixed(2)}</strong></td>
+            </tr>
+            <tr class="total-row">
+              <td>Total:</td>
+              <td style="text-align: right; color: #10b981;">$${invoice.total.toFixed(2)}</td>
+            </tr>
+          </table>
+        </div>
+
+        <div style="margin-top: 30px;">
+          <strong>Status:</strong>
+          <span class="status-badge status-${invoice.status}">
+            ${invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+          </span>
+          ${invoice.paymentMethod ? `<br/><br/><strong>Payment Method:</strong> ${invoice.paymentMethod}` : ''}
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Create and download the HTML file
+    const blob = new Blob([invoiceHTML], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${invoice.invoiceNumber}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
     setTimeout(() => {
       showToast(`${invoice.invoiceNumber} downloaded successfully!`, 'success');
-    }, 1500);
+    }, 500);
   };
 
   const handleSendEmail = () => {

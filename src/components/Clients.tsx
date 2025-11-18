@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Users, Plus, Search, Edit2, Trash2, X, Mail, Phone, Tag, Upload, Download, Filter, MessageSquare, CheckSquare, Square } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 
 interface Client {
@@ -13,9 +14,11 @@ interface Client {
 }
 
 export default function Clients() {
+  const navigate = useNavigate();
   const [clients, setClients] = useState<Client[]>([]);
   const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
@@ -76,6 +79,7 @@ export default function Clients() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSubmitting(true);
     try {
       if (editingClient) {
         await api.clients.update(editingClient.id, formData);
@@ -103,6 +107,8 @@ export default function Clients() {
       } else {
         setError(detailedError);
       }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -113,6 +119,18 @@ export default function Clients() {
       await loadClients();
     } catch (error) {
       console.error('Failed to delete client:', error);
+    }
+  };
+
+  const handleMessage = async (client: Client) => {
+    try {
+      // Create or find existing conversation with client
+      const conversation = await api.conversations.create(client.id);
+      navigate(`/app/conversations?client=${client.id}`);
+    } catch (error) {
+      console.error('Failed to start conversation:', error);
+      // Fallback: just navigate to conversations page
+      navigate('/app/conversations');
     }
   };
 
@@ -422,14 +440,23 @@ export default function Clients() {
                 </div>
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition ml-2">
                   <button
+                    onClick={() => handleMessage(client)}
+                    className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition"
+                    title="Send message"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                  </button>
+                  <button
                     onClick={() => openModal(client)}
                     className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                    title="Edit client"
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(client.id)}
                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                    title="Delete client"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -577,9 +604,10 @@ export default function Clients() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition"
+                  disabled={submitting}
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {editingClient ? 'Save Changes' : 'Add Client'}
+                  {submitting ? 'Saving...' : (editingClient ? 'Save Changes' : 'Add Client')}
                 </button>
               </div>
             </form>
