@@ -249,6 +249,44 @@ export default function LoyaltyProgram() {
       {/* Overview Tab */}
       {activeTab === 'overview' && (
         <div className="space-y-6">
+          {/* Explanation Card */}
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Trophy className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-slate-900 mb-2">How the Loyalty Program Works</h3>
+                <p className="text-slate-700 mb-3">
+                  Reward your best clients and encourage repeat business. Clients earn points with every purchase, unlock tier benefits, and redeem points for rewards.
+                </p>
+                <div className="grid sm:grid-cols-3 gap-3 text-sm">
+                  <div className="flex items-start gap-2">
+                    <Star className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <div className="font-semibold text-slate-900">Earn Points</div>
+                      <div className="text-slate-600">Clients earn points with every purchase</div>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Trophy className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <div className="font-semibold text-slate-900">Unlock Tiers</div>
+                      <div className="text-slate-600">Progress from Bronze to Platinum</div>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Gift className="w-5 h-5 text-pink-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <div className="font-semibold text-slate-900">Redeem Rewards</div>
+                      <div className="text-slate-600">Exchange points for discounts & freebies</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Stats Cards */}
           <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="bg-white border-2 border-slate-200 rounded-xl p-6 hover-lift">
@@ -315,7 +353,23 @@ export default function LoyaltyProgram() {
 
       {/* Tiers Tab */}
       {activeTab === 'tiers' && (
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="space-y-6">
+          {/* Explanation Card */}
+          <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-200 rounded-xl p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-amber-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Award className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-slate-900 mb-2">Loyalty Tiers Explained</h3>
+                <p className="text-slate-700">
+                  Clients automatically progress through tiers (Bronze → Silver → Gold → Platinum) as they earn points. Higher tiers unlock better benefits and earn points faster, encouraging repeat business.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
           {tiers.map((tier) => (
             <div
               key={tier.id}
@@ -344,12 +398,29 @@ export default function LoyaltyProgram() {
               </div>
             </div>
           ))}
+          </div>
         </div>
       )}
 
       {/* Rewards Tab */}
       {activeTab === 'rewards' && (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="space-y-6">
+          {/* Explanation Card */}
+          <div className="bg-gradient-to-r from-pink-50 to-rose-50 border-2 border-pink-200 rounded-xl p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-pink-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Gift className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-slate-900 mb-2">Rewards Catalog</h3>
+                <p className="text-slate-700">
+                  Create rewards that clients can redeem using their points. Examples: discounts, free services, gift cards, or exclusive VIP perks. The more valuable the reward, the more points it should cost.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {rewards.map((reward) => (
             <div
               key={reward.id}
@@ -385,6 +456,7 @@ export default function LoyaltyProgram() {
               </div>
             </div>
           ))}
+          </div>
         </div>
       )}
 

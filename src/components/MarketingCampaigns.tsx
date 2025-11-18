@@ -255,7 +255,38 @@ export default function MarketingCampaigns() {
 
       {/* Campaigns Tab */}
       {activeTab === 'campaigns' && (
-        <div className="space-y-4">
+        <div className="space-y-6">
+          {/* Explanation Card */}
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-xl p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Send className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-slate-900 mb-2">How Marketing Campaigns Work</h3>
+                <p className="text-slate-700 mb-3">
+                  Marketing campaigns help you reach your clients with targeted messages. Choose between email for detailed promotions or SMS for quick updates.
+                </p>
+                <div className="grid sm:grid-cols-2 gap-3 text-sm">
+                  <div className="flex items-start gap-2">
+                    <Mail className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <div className="font-semibold text-slate-900">Email Campaigns</div>
+                      <div className="text-slate-600">Perfect for newsletters, promotions, and detailed content with images</div>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <MessageSquare className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <div className="font-semibold text-slate-900">SMS Campaigns</div>
+                      <div className="text-slate-600">Great for appointment reminders and time-sensitive updates</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {campaigns.map((campaign) => (
             <div key={campaign.id} className="bg-white border-2 border-slate-200 rounded-xl p-6 hover:shadow-lg transition">
               <div className="flex items-start justify-between mb-4">
@@ -333,7 +364,23 @@ export default function MarketingCampaigns() {
 
       {/* Templates Tab */}
       {activeTab === 'templates' && (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="space-y-6">
+          {/* Explanation Card */}
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Zap className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-slate-900 mb-2">Campaign Templates</h3>
+                <p className="text-slate-700">
+                  Templates are pre-written campaign messages you can customize and reuse. They save time and ensure consistent messaging. Click "Use Template" to create a new campaign based on any template below.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {templates.map((template) => (
             <div key={template.id} className="bg-white border-2 border-slate-200 rounded-xl p-6 hover-lift group">
               <div className="flex items-start justify-between mb-4">
@@ -357,12 +404,31 @@ export default function MarketingCampaigns() {
               </button>
             </div>
           ))}
+          </div>
         </div>
       )}
 
       {/* Analytics Tab */}
       {activeTab === 'analytics' && (
         <div className="space-y-6">
+          {/* Explanation Card */}
+          <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-xl p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                <TrendingUp className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-slate-900 mb-2">Understanding Campaign Metrics</h3>
+                <div className="grid sm:grid-cols-2 gap-3 text-sm text-slate-700">
+                  <div><span className="font-semibold">Open Rate:</span> % of recipients who opened your email</div>
+                  <div><span className="font-semibold">Click Rate:</span> % who clicked links in your email</div>
+                  <div><span className="font-semibold">Conversion Rate:</span> % who took the desired action</div>
+                  <div><span className="font-semibold">ROI:</span> Return on investment from your campaigns</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl p-8 text-white">
             <h2 className="text-2xl font-bold mb-6">Campaign Performance</h2>
             <div className="grid md:grid-cols-4 gap-6">
