@@ -101,7 +101,16 @@ export default function GettingStartedGuide({ onClose, onOpenSettings }: Getting
                 <li className="flex items-start space-x-2">
                   <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
                   <span className="text-gray-700">
-                    <strong>Automatic Sync (Coming Soon):</strong> Reviews will sync automatically
+                    <strong>Automatic Sync:</strong> Connect APIs for auto-syncing (
+                    <a
+                      href="https://github.com/simonhayes51/avizo-new/blob/main/docs/REVIEW_API_SETUP.md"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-700 underline"
+                    >
+                      setup guide
+                    </a>
+                    )
                   </span>
                 </li>
               </ul>
