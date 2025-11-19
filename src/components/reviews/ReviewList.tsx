@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { Star, Flag, MessageSquare, Calendar, ExternalLink, Send } from 'lucide-react';
 import { Review } from '../../types';
-import { format } from 'date-fns';
+
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
 
 interface ReviewListProps {
   reviews: Review[];
@@ -119,7 +123,7 @@ export default function ReviewList({ reviews, onReply, onToggleFlag, onMarkAsRea
                 )}
                 <div className="flex items-center space-x-1">
                   <Calendar className="h-4 w-4" />
-                  <span>{format(new Date(review.review_date), 'MMM d, yyyy')}</span>
+                  <span>{formatDate(review.review_date)}</span>
                 </div>
               </div>
             </div>
@@ -157,7 +161,7 @@ export default function ReviewList({ reviews, onReply, onToggleFlag, onMarkAsRea
                   <p className="text-sm text-gray-700">{review.reply_text}</p>
                   {review.reply_date && (
                     <p className="text-xs text-gray-500 mt-1">
-                      Replied on {format(new Date(review.reply_date), 'MMM d, yyyy')}
+                      Replied on {formatDate(review.reply_date)}
                     </p>
                   )}
                 </div>
