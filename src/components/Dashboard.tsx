@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Clock, MapPin, User, AlertCircle, Plus, X, Calendar as CalendarIcon, Users, DollarSign, TrendingUp, MessageSquare, Bell, Download, FileText } from 'lucide-react';
+import { Clock, MapPin, User, AlertCircle, Plus, X, Calendar as CalendarIcon, Users, DollarSign, TrendingUp, MessageSquare, Bell, Download, FileText, Send, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import { Appointment, Client } from '../types';
+import AIInsights from './AIInsights';
 
 export default function Dashboard() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -280,6 +281,9 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {/* AI Insights */}
+      <AIInsights clients={clients} appointments={appointments} />
 
       {/* Quick Actions Panel */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
@@ -796,15 +800,188 @@ interface FillGapModalProps {
   onSuccess: () => void;
 }
 
+interface ClientScore {
+  client: Client;
+  score: number;
+  reasons: string[];
+  lastAppointment?: Date;
+  daysSinceLastAppointment?: number;
+  preferredTimeMatch: boolean;
+  previousSameSlotBookings: number;
+}
+
 function FillGapModal({ gap, clients, onClose, onSuccess }: FillGapModalProps) {
+  const [mode, setMode] = useState<'smart' | 'manual'>('smart');
+  const [rankedClients, setRankedClients] = useState<ClientScore[]>([]);
+  const [selectedClients, setSelectedClients] = useState<Set<string>>(new Set());
+  const [messageTemplate, setMessageTemplate] = useState('');
+  const [sending, setSending] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  // Manual mode state
   const [formData, setFormData] = useState({
     clientId: '',
     title: '',
     location: '',
     notes: '',
   });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (mode === 'smart') {
+      analyzeClientsWithAI();
+    }
+  }, [mode]);
+
+  const analyzeClientsWithAI = async () => {
+    setLoading(true);
+    try {
+      // Fetch all appointments to analyze patterns
+      const allAppointments = await api.appointments.getAll({
+        startDate: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
+        endDate: new Date().toISOString(),
+      });
+
+      const gapTime = new Date(gap.start_time);
+      const gapDay = gapTime.getDay(); // 0-6 (Sunday-Saturday)
+      const gapHour = gapTime.getHours();
+      const gapMinute = gapTime.getMinutes();
+
+      // AI scoring algorithm
+      const scored: ClientScore[] = clients.map(client => {
+        let score = 0;
+        const reasons: string[] = [];
+
+        // Get client's appointment history
+        const clientAppointments = allAppointments.filter(apt =>
+          apt.client && typeof apt.client === 'object' && apt.client.id === client.id
+        );
+
+        // Calculate days since last appointment
+        let lastAppointment: Date | undefined;
+        let daysSinceLastAppointment: number | undefined;
+
+        if (clientAppointments.length > 0) {
+          const sortedApts = clientAppointments
+            .map(apt => new Date(apt.end_time))
+            .sort((a, b) => b.getTime() - a.getTime());
+          lastAppointment = sortedApts[0];
+          daysSinceLastAppointment = Math.floor((Date.now() - lastAppointment.getTime()) / (1000 * 60 * 60 * 24));
+
+          // OVERDUE DETECTION (HIGH PRIORITY)
+          if (daysSinceLastAppointment > 30) {
+            score += 50;
+            reasons.push(`Overdue by ${daysSinceLastAppointment} days`);
+          } else if (daysSinceLastAppointment > 21) {
+            score += 35;
+            reasons.push(`Due for appointment (${daysSinceLastAppointment} days)`);
+          } else if (daysSinceLastAppointment > 14) {
+            score += 20;
+            reasons.push(`Approaching due date (${daysSinceLastAppointment} days)`);
+          }
+        } else {
+          // New client who hasn't booked yet
+          score += 10;
+          reasons.push('New client - no previous bookings');
+        }
+
+        // TIME SLOT PREFERENCE ANALYSIS
+        let preferredTimeMatch = false;
+        let previousSameSlotBookings = 0;
+
+        const sameDayApts = clientAppointments.filter(apt => {
+          const aptTime = new Date(apt.start_time);
+          return aptTime.getDay() === gapDay;
+        });
+
+        const similarTimeApts = clientAppointments.filter(apt => {
+          const aptTime = new Date(apt.start_time);
+          const hourDiff = Math.abs(aptTime.getHours() - gapHour);
+          const minuteDiff = Math.abs(aptTime.getMinutes() - gapMinute);
+          return hourDiff === 0 && minuteDiff <= 30; // Within 30 minutes
+        });
+
+        if (sameDayApts.length > 0) {
+          score += 15;
+          reasons.push(`Usually books on ${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][gapDay]}s`);
+        }
+
+        if (similarTimeApts.length > 0) {
+          preferredTimeMatch = true;
+          previousSameSlotBookings = similarTimeApts.length;
+          score += 25 + (similarTimeApts.length * 5);
+          reasons.push(`Previously booked ${similarTimeApts.length}x at similar time`);
+        }
+
+        // BOOKING FREQUENCY (Regular clients are more likely to book)
+        if (clientAppointments.length > 10) {
+          score += 15;
+          reasons.push('Regular client (10+ bookings)');
+        } else if (clientAppointments.length > 5) {
+          score += 10;
+          reasons.push('Frequent client (5+ bookings)');
+        }
+
+        // RECENT ACTIVITY (Recently active clients are more engaged)
+        if (daysSinceLastAppointment && daysSinceLastAppointment <= 7) {
+          score += 10;
+          reasons.push('Recently active');
+        }
+
+        // CANCELLATION RATE (Lower is better)
+        const cancelledApts = clientAppointments.filter(apt => apt.status === 'cancelled');
+        const cancellationRate = clientAppointments.length > 0
+          ? cancelledApts.length / clientAppointments.length
+          : 0;
+
+        if (cancellationRate === 0 && clientAppointments.length > 3) {
+          score += 10;
+          reasons.push('Never cancelled');
+        } else if (cancellationRate > 0.3) {
+          score -= 15;
+          reasons.push('High cancellation rate');
+        }
+
+        return {
+          client,
+          score,
+          reasons,
+          lastAppointment,
+          daysSinceLastAppointment,
+          preferredTimeMatch,
+          previousSameSlotBookings,
+        };
+      });
+
+      // Sort by score (highest first)
+      const sorted = scored.sort((a, b) => b.score - a.score);
+      setRankedClients(sorted);
+
+      // Auto-generate message template
+      const gapDate = new Date(gap.start_time);
+      const dateStr = gapDate.toLocaleDateString('en-GB', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long'
+      });
+      const timeStr = formatTime(gap.start_time);
+
+      setMessageTemplate(
+        `Hi {{client_name}}! 👋\n\n` +
+        `We have an opening on ${dateStr} at ${timeStr}.\n\n` +
+        `${sorted.length > 0 && sorted[0].daysSinceLastAppointment && sorted[0].daysSinceLastAppointment > 21
+          ? "We haven't seen you in a while - would love to have you back! "
+          : ""}` +
+        `Would you like to book this slot?\n\n` +
+        `Reply YES to confirm or let us know if you'd prefer a different time.`
+      );
+    } catch (err) {
+      console.error('Error analyzing clients:', err);
+      setError('Failed to analyze clients. Please try manual mode.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formatTime = (dateString: string) => {
     return new Date(dateString).toLocaleTimeString('en-GB', {
@@ -813,9 +990,52 @@ function FillGapModal({ gap, clients, onClose, onSuccess }: FillGapModalProps) {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const toggleClientSelection = (clientId: string) => {
+    const newSet = new Set(selectedClients);
+    if (newSet.has(clientId)) {
+      newSet.delete(clientId);
+    } else {
+      newSet.add(clientId);
+    }
+    setSelectedClients(newSet);
+  };
+
+  const handleSendMessages = async () => {
+    if (selectedClients.size === 0) {
+      setError('Please select at least one client');
+      return;
+    }
+
+    setSending(true);
+    setError('');
+
+    try {
+      const promises = Array.from(selectedClients).map(async (clientId) => {
+        const clientScore = rankedClients.find(cs => cs.client.id === clientId);
+        if (!clientScore) return;
+
+        // Create or get conversation
+        const conversation = await api.conversations.create(clientId);
+
+        // Send personalized message
+        const personalizedMessage = messageTemplate.replace('{{client_name}}', clientScore.client.name);
+        await api.conversations.sendMessage(conversation.id || conversation, personalizedMessage, 'business');
+      });
+
+      await Promise.all(promises);
+
+      alert(`Successfully sent messages to ${selectedClients.size} client(s)!`);
+      onSuccess();
+    } catch (err: any) {
+      setError(err.message || 'Failed to send messages');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    const manualLoading = true;
     setError('');
 
     try {
@@ -830,113 +1050,313 @@ function FillGapModal({ gap, clients, onClose, onSuccess }: FillGapModalProps) {
       onSuccess();
     } catch (err: any) {
       setError(err.message || 'Failed to fill gap');
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-slate-200">
-          <h2 className="text-xl font-bold text-slate-900">Fill Gap</h2>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-gradient-to-r from-purple-50 to-blue-50">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+              <Zap className="w-6 h-6 text-purple-600" />
+              Smart Gap Filling
+            </h2>
+            <p className="text-slate-600 text-sm mt-1">AI-powered client matching for optimal bookings</p>
+          </div>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-            <X className="w-5 h-5" />
+            <X className="w-6 h-6" />
           </button>
         </div>
 
-        <div className="p-6 bg-blue-50 border-b border-blue-100">
-          <div className="flex items-center space-x-2 text-blue-900">
-            <Clock className="w-5 h-5" />
-            <span className="font-semibold">
-              {formatTime(gap.start_time)} - {formatTime(gap.end_time)}
-            </span>
+        {/* Gap Info */}
+        <div className="p-6 bg-gradient-to-r from-amber-50 to-orange-50 border-b border-orange-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-amber-900">
+              <Clock className="w-5 h-5" />
+              <span className="font-semibold text-lg">
+                {formatTime(gap.start_time)} - {formatTime(gap.end_time)}
+              </span>
+              <span className="text-sm text-amber-700">
+                ({new Date(gap.start_time).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' })})
+              </span>
+            </div>
+
+            {/* Mode Toggle */}
+            <div className="flex gap-2 bg-white rounded-lg p-1 shadow-sm border border-slate-200">
+              <button
+                onClick={() => setMode('smart')}
+                className={`px-4 py-2 rounded-md font-medium transition ${
+                  mode === 'smart'
+                    ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Zap className="w-4 h-4" />
+                  Smart
+                </div>
+              </button>
+              <button
+                onClick={() => setMode('manual')}
+                className={`px-4 py-2 rounded-md font-medium transition ${
+                  mode === 'manual'
+                    ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                Manual
+              </button>
+            </div>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
-              {error}
+        {mode === 'smart' ? (
+          <div className="p-6">
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="inline-block w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mb-4"></div>
+                <p className="text-slate-600">Analyzing clients with AI...</p>
+              </div>
+            ) : (
+              <>
+                {error && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                    {error}
+                  </div>
+                )}
+
+                {/* AI Explanation */}
+                <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200 rounded-xl">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <Zap className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-slate-900 mb-1">AI Analysis Complete</h3>
+                      <p className="text-sm text-slate-600">
+                        Clients ranked by: overdue appointments, time slot preferences, booking history, and engagement patterns.
+                        Top matches are most likely to book this slot.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Ranked Clients List */}
+                <div className="mb-6">
+                  <h3 className="font-bold text-slate-900 mb-3 flex items-center justify-between">
+                    <span>Recommended Clients ({rankedClients.length})</span>
+                    {selectedClients.size > 0 && (
+                      <span className="text-sm font-normal text-purple-600">
+                        {selectedClients.size} selected
+                      </span>
+                    )}
+                  </h3>
+
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {rankedClients.slice(0, 20).map((clientScore, index) => (
+                      <div
+                        key={clientScore.client.id}
+                        className={`p-4 border-2 rounded-xl transition cursor-pointer ${
+                          selectedClients.has(clientScore.client.id)
+                            ? 'border-purple-500 bg-purple-50'
+                            : 'border-slate-200 hover:border-purple-300 bg-white'
+                        }`}
+                        onClick={() => toggleClientSelection(clientScore.client.id)}
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-start gap-3 flex-1">
+                            {/* Rank Badge */}
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                              index === 0 ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900' :
+                              index === 1 ? 'bg-gradient-to-r from-slate-300 to-slate-400 text-slate-700' :
+                              index === 2 ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white' :
+                              'bg-slate-100 text-slate-600'
+                            }`}>
+                              {index + 1}
+                            </div>
+
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h4 className="font-bold text-slate-900">{clientScore.client.name}</h4>
+                                <span className="text-xs font-medium px-2 py-1 bg-purple-100 text-purple-700 rounded">
+                                  Score: {clientScore.score}
+                                </span>
+                              </div>
+
+                              <div className="text-sm text-slate-600 mb-2">
+                                {clientScore.client.phone_number}
+                              </div>
+
+                              {/* AI Reasons */}
+                              <div className="flex flex-wrap gap-1.5">
+                                {clientScore.reasons.map((reason, i) => (
+                                  <span
+                                    key={i}
+                                    className={`text-xs px-2 py-1 rounded ${
+                                      reason.includes('Overdue') || reason.includes('Due for')
+                                        ? 'bg-red-100 text-red-700'
+                                        : reason.includes('time') || reason.includes('Usually books')
+                                        ? 'bg-blue-100 text-blue-700'
+                                        : reason.includes('Regular') || reason.includes('Frequent')
+                                        ? 'bg-green-100 text-green-700'
+                                        : 'bg-slate-100 text-slate-700'
+                                    }`}
+                                  >
+                                    {reason}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Selection Checkbox */}
+                          <div className={`w-6 h-6 rounded border-2 flex items-center justify-center ${
+                            selectedClients.has(clientScore.client.id)
+                              ? 'bg-purple-600 border-purple-600'
+                              : 'border-slate-300'
+                          }`}>
+                            {selectedClients.has(clientScore.client.id) && (
+                              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Message Template */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Message Template
+                  </label>
+                  <textarea
+                    value={messageTemplate}
+                    onChange={(e) => setMessageTemplate(e.target.value)}
+                    rows={6}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none resize-none font-mono text-sm"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">
+                    Use {'{{client_name}}'} to personalize. Message will be sent via chat to selected clients.
+                  </p>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+                  <button
+                    onClick={onClose}
+                    className="px-6 py-3 border-2 border-slate-300 text-slate-700 rounded-xl font-semibold hover:bg-slate-50 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSendMessages}
+                    disabled={sending || selectedClients.size === 0}
+                    className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {sending ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-5 h-5" />
+                        Send to {selectedClients.size > 0 ? selectedClients.size : ''} Client{selectedClients.size !== 1 ? 's' : ''}
+                      </>
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          <form onSubmit={handleManualSubmit} className="p-6 space-y-4">
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                {error}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Client *
+              </label>
+              <select
+                required
+                value={formData.clientId}
+                onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Select a client</option>
+                {clients.map((client) => (
+                  <option key={client.id} value={client.id}>
+                    {client.name} - {client.phone_number}
+                  </option>
+                ))}
+              </select>
             </div>
-          )}
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Client *
-            </label>
-            <select
-              required
-              value={formData.clientId}
-              onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Select a client</option>
-              {clients.map((client) => (
-                <option key={client.id} value={client.id}>
-                  {client.name} - {client.phone_number}
-                </option>
-              ))}
-            </select>
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Title *
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder="e.g., Driving Lesson"
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Title *
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="e.g., Driving Lesson"
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Location
+              </label>
+              <input
+                type="text"
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                placeholder="e.g., 123 High Street"
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Location
-            </label>
-            <input
-              type="text"
-              value={formData.location}
-              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              placeholder="e.g., 123 High Street"
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Notes
+              </label>
+              <textarea
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                placeholder="Any special instructions..."
+                rows={3}
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Notes
-            </label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Any special instructions..."
-              rows={3}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-            />
-          </div>
-
-          <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-200">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-            >
-              {loading ? 'Booking...' : 'Fill Gap'}
-            </button>
-          </div>
-        </form>
+            <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                Fill Gap
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );

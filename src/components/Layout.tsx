@@ -1,12 +1,36 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { Calendar, MessageSquare, Zap, Settings, LayoutDashboard, Users, CalendarDays, BarChart3, LogOut, Bell, Trophy, Send, UserCog, Menu, X, ChevronLeft, ChevronRight, DollarSign } from 'lucide-react';
 import { NavLink, useNavigate, Outlet } from 'react-router-dom';
 import api from '../lib/api';
+import AIAssistant from './AIAssistant';
 
 export default function Layout() {
   const navigate = useNavigate();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [clients, setClients] = useState([]);
+  const [appointments, setAppointments] = useState([]);
+
+  useEffect(() => {
+    // Load data for AI Assistant context
+    const loadData = async () => {
+      try {
+        const [clientsData, appointmentsData] = await Promise.all([
+          api.clients.getAll().catch(() => []),
+          api.appointments.getAll({
+            startDate: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
+            endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          }).catch(() => []),
+        ]);
+        setClients(clientsData);
+        setAppointments(appointmentsData);
+      } catch (error) {
+        console.error('Failed to load data for AI:', error);
+      }
+    };
+
+    loadData();
+  }, []);
 
   const handleLogout = () => {
     api.auth.logout();
@@ -202,6 +226,9 @@ export default function Layout() {
       >
         <Outlet />
       </main>
+
+      {/* AI Assistant - Available Globally */}
+      <AIAssistant clients={clients} appointments={appointments} />
     </div>
   );
 }
