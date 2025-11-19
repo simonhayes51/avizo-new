@@ -18,6 +18,7 @@ import OnboardingFlow from './components/OnboardingFlow';
 import Payments from './components/Payments';
 import Reviews from './components/Reviews';
 import { ToastProvider } from './components/Toast';
+import { SettingsProvider } from './contexts/SettingsContext';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -44,8 +45,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <ToastProvider>
-      <BrowserRouter>
+    <SettingsProvider>
+      <ToastProvider>
+        <BrowserRouter>
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/pricing" element={<Pricing />} />
@@ -78,7 +80,8 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
-    </ToastProvider>
+      </ToastProvider>
+    </SettingsProvider>
   );
 }
 

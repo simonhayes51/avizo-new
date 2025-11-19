@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   currency text DEFAULT 'GBP',
   booking_url_slug text UNIQUE,
   booking_enabled boolean DEFAULT false,
+  preferences jsonb DEFAULT '{"dark_mode": false, "language": "en", "date_format": "DD/MM/YYYY", "time_format": "12h", "start_of_week": 1, "notifications_enabled": true, "email_notifications": true, "sms_notifications": true, "sound_enabled": true, "compact_view": false, "show_avatars": true, "items_per_page": 25}'::jsonb,
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );
