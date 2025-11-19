@@ -80,7 +80,7 @@ export const getProfile = async (req: Request, res: Response) => {
 
     const result = await query(
       `SELECT u.id, u.email, u.is_demo, p.business_name, p.business_type,
-              p.phone_number, p.timezone, p.created_at
+              p.phone_number, p.timezone, p.currency, p.preferences, p.created_at
        FROM users u
        LEFT JOIN profiles p ON p.user_id = u.id
        WHERE u.id = $1`,
@@ -101,14 +101,44 @@ export const getProfile = async (req: Request, res: Response) => {
 export const updateProfile = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
-    const { businessName, businessType, phoneNumber, timezone } = req.body;
+    const { businessName, businessType, phoneNumber, timezone, currency, preferences } = req.body;
+
+    // Build dynamic query based on provided fields
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramCount = 1;
+
+    if (businessName !== undefined) {
+      updates.push(`business_name = $${paramCount++}`);
+      values.push(businessName);
+    }
+    if (businessType !== undefined) {
+      updates.push(`business_type = $${paramCount++}`);
+      values.push(businessType);
+    }
+    if (phoneNumber !== undefined) {
+      updates.push(`phone_number = $${paramCount++}`);
+      values.push(phoneNumber);
+    }
+    if (timezone !== undefined) {
+      updates.push(`timezone = $${paramCount++}`);
+      values.push(timezone);
+    }
+    if (currency !== undefined) {
+      updates.push(`currency = $${paramCount++}`);
+      values.push(currency);
+    }
+    if (preferences !== undefined) {
+      updates.push(`preferences = $${paramCount++}`);
+      values.push(JSON.stringify(preferences));
+    }
+
+    updates.push('updated_at = now()');
+    values.push(userId);
 
     await query(
-      `UPDATE profiles
-       SET business_name = $1, business_type = $2, phone_number = $3,
-           timezone = $4, updated_at = now()
-       WHERE user_id = $5`,
-      [businessName, businessType, phoneNumber, timezone, userId]
+      `UPDATE profiles SET ${updates.join(', ')} WHERE user_id = $${paramCount}`,
+      values
     );
 
     res.json({ success: true });

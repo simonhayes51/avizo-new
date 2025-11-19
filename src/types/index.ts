@@ -219,3 +219,33 @@ export interface ReviewTrend {
   count: number;
   average_rating: number;
 }
+
+export interface UserPreferences {
+  dark_mode: boolean;
+  language: 'en' | 'es' | 'fr' | 'de' | 'it' | 'pt';
+  date_format: 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD';
+  time_format: '12h' | '24h';
+  start_of_week: 0 | 1; // 0 = Sunday, 1 = Monday
+  notifications_enabled: boolean;
+  email_notifications: boolean;
+  sms_notifications: boolean;
+  sound_enabled: boolean;
+  compact_view: boolean;
+  show_avatars: boolean;
+  items_per_page: 10 | 25 | 50 | 100;
+}
+
+export interface Profile {
+  id: string;
+  user_id: string;
+  business_name: string;
+  business_type: string;
+  phone_number: string | null;
+  timezone: string;
+  currency: string;
+  booking_url_slug?: string;
+  booking_enabled: boolean;
+  preferences: UserPreferences;
+  created_at: string;
+  updated_at: string;
+}
