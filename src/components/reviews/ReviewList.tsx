@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Star, Flag, MessageSquare, Calendar, ExternalLink, Send } from 'lucide-react';
+import { Star, Flag, MessageSquare, Calendar, ExternalLink, Send, AlertCircle } from 'lucide-react';
 import { Review } from '../../types';
 
 const formatDate = (dateString: string) => {
@@ -18,17 +18,20 @@ export default function ReviewList({ reviews, onReply, onToggleFlag, onMarkAsRea
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string>('');
 
   const handleSubmitReply = async (reviewId: string) => {
     if (!replyText.trim()) return;
 
     try {
       setSubmitting(true);
+      setError('');
       await onReply(reviewId, replyText);
       setReplyText('');
       setReplyingTo(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting reply:', error);
+      setError(error.message || 'Failed to submit reply. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -174,9 +177,18 @@ export default function ReviewList({ reviews, onReply, onToggleFlag, onMarkAsRea
             <div className="mt-4 pt-4 border-t border-gray-200">
               {replyingTo === review.id ? (
                 <div className="space-y-3">
+                  {error && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-2">
+                      <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-red-800">{error}</p>
+                    </div>
+                  )}
                   <textarea
                     value={replyText}
-                    onChange={(e) => setReplyText(e.target.value)}
+                    onChange={(e) => {
+                      setReplyText(e.target.value);
+                      setError(''); // Clear error when typing
+                    }}
                     placeholder="Write your reply..."
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                     rows={3}
@@ -187,6 +199,7 @@ export default function ReviewList({ reviews, onReply, onToggleFlag, onMarkAsRea
                       onClick={() => {
                         setReplyingTo(null);
                         setReplyText('');
+                        setError('');
                       }}
                       className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                       disabled={submitting}
