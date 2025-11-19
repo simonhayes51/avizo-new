@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Plus, Trash2, ExternalLink, AlertCircle, Check } from 'lucide-react';
+import { X, Plus, Trash2, ExternalLink, AlertCircle, Check, BookOpen } from 'lucide-react';
 import api from '../../lib/api';
 import { ReviewPlatform } from '../../types';
 
@@ -274,9 +274,20 @@ export default function ReviewPlatformSettings({ platforms, onClose }: ReviewPla
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    API Key (Optional)
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      API Key (Optional)
+                    </label>
+                    <a
+                      href="https://github.com/simonhayes51/avizo-new/blob/main/docs/REVIEW_API_SETUP.md"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-600 hover:text-blue-700 flex items-center space-x-1"
+                    >
+                      <BookOpen className="h-3 w-3" />
+                      <span>How to get API key</span>
+                    </a>
+                  </div>
                   <input
                     type="password"
                     value={formData.api_key}
@@ -284,12 +295,26 @@ export default function ReviewPlatformSettings({ platforms, onClose }: ReviewPla
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="For automated review sync"
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Required for automatic review syncing
+                  </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Place ID (Optional)
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Place ID (Optional)
+                    </label>
+                    <a
+                      href="https://github.com/simonhayes51/avizo-new/blob/main/docs/REVIEW_API_SETUP.md"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-600 hover:text-blue-700 flex items-center space-x-1"
+                    >
+                      <BookOpen className="h-3 w-3" />
+                      <span>How to find Place ID</span>
+                    </a>
+                  </div>
                   <input
                     type="text"
                     value={formData.place_id}
@@ -297,6 +322,9 @@ export default function ReviewPlatformSettings({ platforms, onClose }: ReviewPla
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Platform-specific identifier"
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Your business ID on the review platform
+                  </p>
                 </div>
 
                 <button
@@ -310,17 +338,80 @@ export default function ReviewPlatformSettings({ platforms, onClose }: ReviewPla
             </div>
           )}
 
-          {/* Info Box */}
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-start space-x-2">
-              <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-blue-800">
-                <p className="font-medium mb-1">Getting Started</p>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>Add your review platforms to start tracking reviews</li>
-                  <li>Use "Generate Samples" to create demo reviews for testing</li>
-                  <li>API integration coming soon for automated review syncing</li>
-                </ul>
+          {/* API Setup Instructions */}
+          <div className="mt-6 space-y-4">
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg">
+              <div className="flex items-start space-x-3">
+                <BookOpen className="h-6 w-6 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Need Help Setting Up APIs?</h4>
+                  <p className="text-sm text-gray-700 mb-3">
+                    We've created step-by-step guides for connecting each review platform.
+                  </p>
+                  <a
+                    href="https://github.com/simonhayes51/avizo-new/blob/main/docs/REVIEW_API_SETUP.md"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                  >
+                    <BookOpen className="h-4 w-4" />
+                    <span>View Complete Setup Guide</span>
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-start space-x-2">
+                <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-blue-800">
+                  <p className="font-medium mb-2">Quick Start Options:</p>
+                  <div className="space-y-2">
+                    <div className="flex items-start space-x-2">
+                      <span className="font-bold">1.</span>
+                      <span><strong>No API yet?</strong> Use "Generate Samples" to test with demo data</span>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <span className="font-bold">2.</span>
+                      <span><strong>Have API keys?</strong> Add them above for automatic syncing</span>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <span className="font-bold">3.</span>
+                      <span><strong>Manual entry:</strong> Add platforms without API keys and copy/paste reviews</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <h4 className="font-medium text-gray-900 mb-2">📋 Supported Platforms:</h4>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="flex items-center space-x-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span>Google Reviews (API ready)</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span>Facebook (API ready)</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span>Trustpilot (API ready)</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span>Yelp (read-only)</span>
+                </div>
+                <div className="flex items-center space-x-2 text-gray-500">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>TripAdvisor (coming soon)</span>
+                </div>
+                <div className="flex items-center space-x-2 text-gray-500">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>Custom platforms</span>
+                </div>
               </div>
             </div>
           </div>
