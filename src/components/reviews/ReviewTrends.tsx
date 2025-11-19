@@ -2,7 +2,11 @@ import { useState, useEffect } from 'react';
 import { TrendingUp, Star } from 'lucide-react';
 import api from '../../lib/api';
 import { ReviewTrend } from '../../types';
-import { format, parseISO } from 'date-fns';
+
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
 
 interface ReviewTrendsProps {
   platformId?: string;
@@ -90,7 +94,7 @@ export default function ReviewTrends({ platformId, days = 30 }: ReviewTrendsProp
             <div key={index} className="flex items-center space-x-3 group">
               {/* Date */}
               <div className="w-24 text-sm text-gray-600">
-                {format(parseISO(trend.date), 'MMM d')}
+                {formatDate(trend.date)}
               </div>
 
               {/* Review Count Bar */}
