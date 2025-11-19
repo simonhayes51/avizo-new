@@ -1,5 +1,5 @@
 import { ReactNode, useState, useEffect } from 'react';
-import { Calendar, MessageSquare, Zap, Settings, LayoutDashboard, Users, CalendarDays, BarChart3, LogOut, Bell, Trophy, Send, UserCog, Menu, X, ChevronLeft, ChevronRight, DollarSign } from 'lucide-react';
+import { Calendar, MessageSquare, Zap, Settings, LayoutDashboard, Users, CalendarDays, BarChart3, LogOut, Bell, Trophy, Send, UserCog, Menu, X, ChevronLeft, ChevronRight, DollarSign, Star } from 'lucide-react';
 import { NavLink, useNavigate, Outlet } from 'react-router-dom';
 import api from '../lib/api';
 import AIAssistant from './AIAssistant';
@@ -45,6 +45,7 @@ export default function Layout() {
     { to: '/app/payments', icon: <DollarSign className="w-5 h-5" />, label: 'Payments' },
     { to: '/app/automations', icon: <Zap className="w-5 h-5" />, label: 'Automations' },
     { to: '/app/analytics', icon: <BarChart3 className="w-5 h-5" />, label: 'Analytics' },
+    { to: '/app/reviews', icon: <Star className="w-5 h-5" />, label: 'Reviews' },
     { to: '/app/marketing', icon: <Send className="w-5 h-5" />, label: 'Marketing' },
     { to: '/app/loyalty', icon: <Trophy className="w-5 h-5" />, label: 'Loyalty' },
     { to: '/app/team', icon: <UserCog className="w-5 h-5" />, label: 'Team' },

@@ -17,6 +17,7 @@ import paymentsRoutes from './routes/paymentsRoutes';
 import recurringRoutes from './routes/recurringRoutes';
 import invoicesRoutes from './routes/invoicesRoutes';
 import waitingListRoutes from './routes/waitingListRoutes';
+import reviewsRoutes from './routes/reviewsRoutes';
 
 dotenv.config();
 
@@ -86,6 +87,7 @@ app.use('/api/payments', paymentsRoutes);
 app.use('/api/recurring', recurringRoutes);
 app.use('/api/invoices', invoicesRoutes);
 app.use('/api/waiting-list', waitingListRoutes);
+app.use('/api/reviews', reviewsRoutes);
 
 // Health checks - both root and /api/health for Railway
 app.get('/health', (req, res) => {
