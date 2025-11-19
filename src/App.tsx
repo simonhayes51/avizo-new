@@ -16,6 +16,7 @@ import TeamManagement from './components/TeamManagement';
 import Pricing from './components/Pricing';
 import OnboardingFlow from './components/OnboardingFlow';
 import Payments from './components/Payments';
+import Reviews from './components/Reviews';
 import { ToastProvider } from './components/Toast';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -66,6 +67,7 @@ function App() {
             <Route path="automations" element={<Automations />} />
             <Route path="analytics" element={<Analytics />} />
             <Route path="payments" element={<Payments />} />
+            <Route path="reviews" element={<Reviews />} />
             <Route path="notifications" element={<NotificationCenter />} />
             <Route path="loyalty" element={<LoyaltyProgram />} />
             <Route path="marketing" element={<MarketingCampaigns />} />

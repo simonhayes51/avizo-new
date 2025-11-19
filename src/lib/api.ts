@@ -465,6 +465,128 @@ class ApiClient {
       });
     },
   };
+
+  // Reviews
+  reviews = {
+    // Platforms
+    getPlatforms: async () => {
+      return this.request('/reviews/platforms');
+    },
+
+    addPlatform: async (data: {
+      platform_name: string;
+      platform_url?: string;
+      api_key?: string;
+      place_id?: string;
+      settings?: any;
+    }) => {
+      return this.request('/reviews/platforms', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+
+    updatePlatform: async (id: string, data: any) => {
+      return this.request(`/reviews/platforms/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+    },
+
+    deletePlatform: async (id: string) => {
+      return this.request(`/reviews/platforms/${id}`, {
+        method: 'DELETE',
+      });
+    },
+
+    // Reviews
+    getAll: async (params?: {
+      platform_id?: string;
+      min_rating?: number;
+      max_rating?: number;
+      is_replied?: boolean;
+      is_flagged?: boolean;
+      limit?: number;
+      offset?: number;
+      start_date?: string;
+      end_date?: string;
+    }) => {
+      const query = params ? '?' + new URLSearchParams(params as any).toString() : '';
+      return this.request(`/reviews${query}`);
+    },
+
+    get: async (id: string) => {
+      return this.request(`/reviews/${id}`);
+    },
+
+    create: async (data: {
+      platform_id?: string;
+      client_id?: string;
+      reviewer_name: string;
+      reviewer_email?: string;
+      rating: number;
+      comment?: string;
+      review_date?: string;
+      external_review_id?: string;
+    }) => {
+      return this.request('/reviews', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+
+    update: async (id: string, data: {
+      reply_text?: string;
+      is_replied?: boolean;
+      is_read?: boolean;
+      is_flagged?: boolean;
+      tags?: string[];
+    }) => {
+      return this.request(`/reviews/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+    },
+
+    delete: async (id: string) => {
+      return this.request(`/reviews/${id}`, {
+        method: 'DELETE',
+      });
+    },
+
+    // Analytics
+    getStats: async (params?: {
+      platform_id?: string;
+      start_date?: string;
+      end_date?: string;
+    }) => {
+      const query = params ? '?' + new URLSearchParams(params as any).toString() : '';
+      return this.request(`/reviews/analytics/stats${query}`);
+    },
+
+    getTrends: async (params?: {
+      days?: number;
+      platform_id?: string;
+    }) => {
+      const query = params ? '?' + new URLSearchParams(params as any).toString() : '';
+      return this.request(`/reviews/analytics/trends${query}`);
+    },
+
+    // Utility
+    sync: async (platform_id: string) => {
+      return this.request('/reviews/sync', {
+        method: 'POST',
+        body: JSON.stringify({ platform_id }),
+      });
+    },
+
+    generateSamples: async (platform_id: string, count?: number) => {
+      return this.request('/reviews/generate-samples', {
+        method: 'POST',
+        body: JSON.stringify({ platform_id, count }),
+      });
+    },
+  };
 }
 
 const api = new ApiClient();

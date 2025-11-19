@@ -166,3 +166,56 @@ export interface TeamMember {
   created_at: string;
   updated_at: string;
 }
+
+export interface ReviewPlatform {
+  id: string;
+  user_id: string;
+  platform_name: string;
+  platform_url?: string;
+  api_key?: string;
+  place_id?: string;
+  is_active: boolean;
+  settings: any;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Review {
+  id: string;
+  user_id: string;
+  platform_id?: string;
+  platform_name?: string;
+  client_id?: string;
+  external_review_id?: string;
+  reviewer_name: string;
+  reviewer_email?: string;
+  rating: number;
+  comment?: string;
+  review_date: string;
+  reply_text?: string;
+  reply_date?: string;
+  is_replied: boolean;
+  is_read: boolean;
+  is_flagged: boolean;
+  sentiment?: 'positive' | 'neutral' | 'negative';
+  tags: string[];
+  metadata: any;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReviewStats {
+  total_reviews: number;
+  average_rating: number;
+  rating_distribution: { [key: number]: number };
+  pending_replies: number;
+  negative_reviews: number;
+  recent_trend: 'up' | 'down' | 'stable';
+  change_percentage: number;
+}
+
+export interface ReviewTrend {
+  date: string;
+  count: number;
+  average_rating: number;
+}

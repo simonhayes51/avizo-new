@@ -8,6 +8,8 @@
 
 -- Drop old tables if they exist (handles migration from Supabase)
 -- Order matters: drop dependent tables first to avoid foreign key constraint errors
+DROP TABLE IF EXISTS reviews CASCADE;
+DROP TABLE IF EXISTS review_platforms CASCADE;
 DROP TABLE IF EXISTS automation_logs CASCADE;
 DROP TABLE IF EXISTS automations CASCADE;
 DROP TABLE IF EXISTS integrations CASCADE;
@@ -287,3 +289,52 @@ CREATE INDEX IF NOT EXISTS idx_invoices_user ON invoices(user_id);
 CREATE INDEX IF NOT EXISTS idx_invoices_client ON invoices(client_id);
 CREATE INDEX IF NOT EXISTS idx_invoices_status ON invoices(status);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_invoices_number ON invoices(user_id, invoice_number);
+
+-- Review Platforms table
+CREATE TABLE IF NOT EXISTS review_platforms (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  platform_name text NOT NULL,
+  platform_url text,
+  api_key text,
+  place_id text,
+  is_active boolean DEFAULT true,
+  settings jsonb DEFAULT '{}',
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_review_platforms_user ON review_platforms(user_id);
+CREATE INDEX IF NOT EXISTS idx_review_platforms_active ON review_platforms(user_id, is_active);
+
+-- Reviews table
+CREATE TABLE IF NOT EXISTS reviews (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  platform_id uuid REFERENCES review_platforms(id) ON DELETE CASCADE,
+  client_id uuid REFERENCES clients(id) ON DELETE SET NULL,
+  external_review_id text,
+  reviewer_name text NOT NULL,
+  reviewer_email text,
+  rating numeric(2,1) NOT NULL CHECK (rating >= 0 AND rating <= 5),
+  comment text,
+  review_date timestamptz NOT NULL,
+  reply_text text,
+  reply_date timestamptz,
+  is_replied boolean DEFAULT false,
+  is_read boolean DEFAULT false,
+  is_flagged boolean DEFAULT false,
+  sentiment text,
+  tags text[] DEFAULT '{}',
+  metadata jsonb DEFAULT '{}',
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_reviews_user ON reviews(user_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_platform ON reviews(platform_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_date ON reviews(user_id, review_date DESC);
+CREATE INDEX IF NOT EXISTS idx_reviews_rating ON reviews(user_id, rating);
+CREATE INDEX IF NOT EXISTS idx_reviews_replied ON reviews(user_id, is_replied);
+CREATE INDEX IF NOT EXISTS idx_reviews_flagged ON reviews(user_id, is_flagged);
+CREATE INDEX IF NOT EXISTS idx_reviews_external ON reviews(platform_id, external_review_id);
