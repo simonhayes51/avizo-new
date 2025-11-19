@@ -1,0 +1,548 @@
+/*
+Theme Name: Quiz Master General
+Theme URI: https://www.thequizmastergeneral.com
+Description: A vibrant, fun WordPress theme for The Quiz Master General - North East England's leading quiz provider. Features an engaging design perfect for quiz nights, race nights, and event bookings.
+Version: 1.0
+Author: Quiz Master General
+Author URI: https://www.thequizmastergeneral.com
+License: GNU General Public License v2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: quizmaster-general
+Tags: entertainment, events, quiz, responsive, custom-colors
+*/
+
+/* ==========================================
+   RESET & BASE STYLES
+   ========================================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Quiz Master General Brand Colors */
+  --primary-color: #FF6B35;      /* Vibrant Orange */
+  --secondary-color: #F7931E;    /* Golden Yellow */
+  --accent-color: #4ECDC4;       /* Teal */
+  --dark-bg: #2C3E50;            /* Dark Blue */
+  --light-bg: #ECF0F1;           /* Light Gray */
+  --text-dark: #2C3E50;
+  --text-light: #ffffff;
+  --success-color: #2ECC71;
+  --shadow: rgba(0, 0, 0, 0.1);
+  --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  --font-heading: 'Arial Black', 'Arial Bold', Gadget, sans-serif;
+  --transition: all 0.3s ease;
+}
+
+body {
+  font-family: var(--font-main);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text-dark);
+  background-color: #ffffff;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+a:hover {
+  color: var(--secondary-color);
+}
+
+/* ==========================================
+   TYPOGRAPHY
+   ========================================== */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 900;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+  color: var(--dark-bg);
+}
+
+h1 {
+  font-size: 3rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+h2 {
+  font-size: 2.5rem;
+  color: var(--primary-color);
+}
+
+h3 {
+  font-size: 2rem;
+}
+
+h4 {
+  font-size: 1.5rem;
+}
+
+p {
+  margin-bottom: 1.5rem;
+}
+
+/* ==========================================
+   HEADER & NAVIGATION
+   ========================================== */
+.site-header {
+  background: linear-gradient(135deg, var(--dark-bg) 0%, #34495e 100%);
+  padding: 1.5rem 0;
+  box-shadow: 0 4px 15px var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.header-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.site-branding {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.site-title {
+  margin: 0;
+  font-size: 2rem;
+  color: var(--text-light);
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.site-title a {
+  color: var(--text-light);
+  text-decoration: none;
+}
+
+.site-title a:hover {
+  color: var(--secondary-color);
+}
+
+.site-description {
+  color: var(--accent-color);
+  font-size: 0.9rem;
+  font-weight: bold;
+  margin: 0.25rem 0 0 0;
+}
+
+/* Navigation */
+.main-navigation {
+  display: flex;
+  align-items: center;
+}
+
+.nav-menu {
+  list-style: none;
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+.nav-menu li a {
+  color: var(--text-light);
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  transition: var(--transition);
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+}
+
+.nav-menu li a:hover,
+.nav-menu li.current-menu-item a {
+  background-color: var(--primary-color);
+  color: var(--text-light);
+}
+
+/* Mobile Menu Toggle */
+.menu-toggle {
+  display: none;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+/* ==========================================
+   HERO SECTION
+   ========================================== */
+.hero-section {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  color: var(--text-light);
+  padding: 5rem 2rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-section::before {
+  content: '???';
+  position: absolute;
+  font-size: 20rem;
+  opacity: 0.1;
+  top: -5rem;
+  right: -5rem;
+  transform: rotate(-15deg);
+}
+
+.hero-content {
+  max-width: 800px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-title {
+  color: var(--text-light);
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+  text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+}
+
+.hero-subtitle {
+  font-size: 1.5rem;
+  margin-bottom: 2rem;
+  font-weight: normal;
+}
+
+.cta-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+}
+
+.btn {
+  display: inline-block;
+  padding: 1rem 2.5rem;
+  border-radius: 50px;
+  font-weight: bold;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: var(--transition);
+  border: 3px solid transparent;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background-color: var(--text-light);
+  color: var(--primary-color);
+  border-color: var(--text-light);
+}
+
+.btn-primary:hover {
+  background-color: transparent;
+  color: var(--text-light);
+  border-color: var(--text-light);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--text-light);
+  border-color: var(--text-light);
+}
+
+.btn-secondary:hover {
+  background-color: var(--text-light);
+  color: var(--primary-color);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+/* ==========================================
+   MAIN CONTENT
+   ========================================== */
+.site-main {
+  max-width: 1200px;
+  margin: 4rem auto;
+  padding: 0 2rem;
+}
+
+.content-area {
+  background-color: white;
+}
+
+/* ==========================================
+   SERVICES SECTION
+   ========================================== */
+.services-section {
+  padding: 4rem 2rem;
+  background-color: var(--light-bg);
+}
+
+.services-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-title {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.service-card {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 15px;
+  box-shadow: 0 5px 20px var(--shadow);
+  transition: var(--transition);
+  text-align: center;
+  border-top: 5px solid var(--primary-color);
+}
+
+.service-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+}
+
+.service-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.service-card h3 {
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+}
+
+/* ==========================================
+   TESTIMONIALS
+   ========================================== */
+.testimonials-section {
+  padding: 4rem 2rem;
+  background: linear-gradient(135deg, var(--dark-bg) 0%, #34495e 100%);
+  color: var(--text-light);
+}
+
+.testimonials-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.testimonials-section .section-title {
+  color: var(--text-light);
+}
+
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+.testimonial-card {
+  background: rgba(255,255,255,0.1);
+  padding: 2rem;
+  border-radius: 15px;
+  border: 2px solid rgba(255,255,255,0.2);
+  backdrop-filter: blur(10px);
+}
+
+.testimonial-text {
+  font-style: italic;
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.8;
+}
+
+.testimonial-author {
+  font-weight: bold;
+  color: var(--secondary-color);
+}
+
+.testimonial-venue {
+  color: var(--accent-color);
+  font-size: 0.9rem;
+}
+
+/* ==========================================
+   CONTACT SECTION
+   ========================================== */
+.contact-section {
+  padding: 4rem 2rem;
+  background-color: white;
+}
+
+.contact-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.contact-info {
+  background: var(--light-bg);
+  padding: 2.5rem;
+  border-radius: 15px;
+  margin-top: 2rem;
+  box-shadow: 0 5px 20px var(--shadow);
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+}
+
+.contact-item i {
+  color: var(--primary-color);
+  font-size: 1.5rem;
+}
+
+/* ==========================================
+   FOOTER
+   ========================================== */
+.site-footer {
+  background: var(--dark-bg);
+  color: var(--text-light);
+  padding: 3rem 2rem 1rem;
+  margin-top: 4rem;
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 3rem;
+  margin-bottom: 2rem;
+}
+
+.footer-section h3 {
+  color: var(--secondary-color);
+  margin-bottom: 1rem;
+  font-size: 1.3rem;
+}
+
+.footer-section p,
+.footer-section a {
+  color: rgba(255,255,255,0.8);
+  line-height: 1.8;
+}
+
+.footer-section a:hover {
+  color: var(--accent-color);
+}
+
+.footer-bottom {
+  text-align: center;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.6);
+}
+
+/* ==========================================
+   RESPONSIVE DESIGN
+   ========================================== */
+@media (max-width: 768px) {
+  .menu-toggle {
+    display: block;
+  }
+
+  .nav-menu {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    gap: 0;
+    margin-top: 1rem;
+  }
+
+  .nav-menu.active {
+    display: flex;
+  }
+
+  .nav-menu li {
+    width: 100%;
+  }
+
+  .nav-menu li a {
+    display: block;
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .header-container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .main-navigation {
+    width: 100%;
+  }
+
+  .hero-title {
+    font-size: 2.5rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.2rem;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  h2 {
+    font-size: 1.8rem;
+  }
+
+  .services-grid,
+  .testimonials-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================
+   UTILITY CLASSES
+   ========================================== */
+.text-center {
+  text-align: center;
+}
+
+.mb-2 {
+  margin-bottom: 2rem;
+}
+
+.mt-2 {
+  margin-top: 2rem;
+}
+
+.highlight {
+  color: var(--primary-color);
+  font-weight: bold;
+}
