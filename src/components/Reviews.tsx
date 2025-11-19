@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Star, TrendingUp, TrendingDown, Minus, AlertCircle, MessageSquare, Filter, Plus, Settings } from 'lucide-react';
+import { Star, TrendingUp, TrendingDown, Minus, AlertCircle, MessageSquare, Filter, Plus, Settings, HelpCircle } from 'lucide-react';
 import api from '../lib/api';
 import { Review, ReviewPlatform, ReviewStats } from '../types';
 import ReviewList from './reviews/ReviewList';
 import ReviewTrends from './reviews/ReviewTrends';
 import ReviewPlatformSettings from './reviews/ReviewPlatformSettings';
+import GettingStartedGuide from './reviews/GettingStartedGuide';
 
 export default function Reviews() {
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -15,10 +16,18 @@ export default function Reviews() {
   const [filterRating, setFilterRating] = useState<string>('all');
   const [filterReplied, setFilterReplied] = useState<string>('all');
   const [showPlatformSettings, setShowPlatformSettings] = useState(false);
+  const [showGettingStarted, setShowGettingStarted] = useState(false);
 
   useEffect(() => {
     loadData();
   }, [selectedPlatform, filterRating, filterReplied]);
+
+  // Auto-show getting started guide if no platforms
+  useEffect(() => {
+    if (!loading && platforms.length === 0 && !localStorage.getItem('reviews_guide_dismissed')) {
+      setShowGettingStarted(true);
+    }
+  }, [loading, platforms]);
 
   const loadData = async () => {
     try {
@@ -127,22 +136,71 @@ export default function Reviews() {
           <h1 className="text-3xl font-bold text-gray-900">Review Management</h1>
           <p className="text-gray-600 mt-1">Monitor and respond to customer reviews</p>
         </div>
-        <button
-          onClick={() => setShowPlatformSettings(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2"
-        >
-          <Settings className="h-5 w-5" />
-          <span>Platform Settings</span>
-        </button>
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={() => setShowGettingStarted(true)}
+            className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center space-x-2"
+            title="Show getting started guide"
+          >
+            <HelpCircle className="h-5 w-5" />
+            <span className="hidden sm:inline">Help</span>
+          </button>
+          <button
+            onClick={() => setShowPlatformSettings(true)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+          >
+            <Settings className="h-5 w-5" />
+            <span>Manage Platforms</span>
+          </button>
+        </div>
       </div>
 
+      {/* Empty State - No Platforms */}
+      {!loading && platforms.length === 0 && (
+        <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg border-2 border-dashed border-blue-300 p-12 text-center mb-6">
+          <div className="max-w-2xl mx-auto">
+            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Star className="h-10 w-10 text-blue-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">Welcome to Review Management!</h2>
+            <p className="text-gray-600 mb-6 text-lg">
+              Track and respond to reviews from Google, Yelp, Facebook, and more - all in one place.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={() => setShowGettingStarted(true)}
+                className="px-6 py-3 bg-white border-2 border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 font-medium flex items-center justify-center space-x-2"
+              >
+                <HelpCircle className="h-5 w-5" />
+                <span>Show Me How It Works</span>
+              </button>
+              <button
+                onClick={() => setShowPlatformSettings(true)}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center justify-center space-x-2"
+              >
+                <Plus className="h-5 w-5" />
+                <span>Add Your First Platform</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Stats Cards */}
-      {stats && (
+      {stats && platforms.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
           {/* Average Rating */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 group relative">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-medium text-gray-600">Average Rating</p>
+              <div className="flex items-center space-x-1">
+                <p className="text-sm font-medium text-gray-600">Average Rating</p>
+                <div className="relative group/tooltip">
+                  <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
+                  <div className="hidden group-hover/tooltip:block absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap z-10">
+                    Your overall rating across all reviews
+                  </div>
+                </div>
+              </div>
               {getTrendIcon()}
             </div>
             <div className="flex items-center space-x-2">
@@ -159,7 +217,15 @@ export default function Reviews() {
           {/* Total Reviews */}
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-medium text-gray-600">Total Reviews</p>
+              <div className="flex items-center space-x-1">
+                <p className="text-sm font-medium text-gray-600">Total Reviews</p>
+                <div className="relative group/tooltip">
+                  <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
+                  <div className="hidden group-hover/tooltip:block absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap z-10">
+                    Total number of reviews tracked
+                  </div>
+                </div>
+              </div>
               <MessageSquare className="h-5 w-5 text-blue-600" />
             </div>
             <p className="text-3xl font-bold text-gray-900">{stats.total_reviews}</p>
@@ -182,7 +248,15 @@ export default function Reviews() {
           {/* Pending Replies */}
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-medium text-gray-600">Needs Reply</p>
+              <div className="flex items-center space-x-1">
+                <p className="text-sm font-medium text-gray-600">Needs Reply</p>
+                <div className="relative group/tooltip">
+                  <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
+                  <div className="hidden group-hover/tooltip:block absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap z-10">
+                    Reviews you haven't replied to yet
+                  </div>
+                </div>
+              </div>
               <AlertCircle className="h-5 w-5 text-orange-600" />
             </div>
             <p className="text-3xl font-bold text-gray-900">{stats.pending_replies}</p>
@@ -194,7 +268,15 @@ export default function Reviews() {
           {/* Negative Reviews */}
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-medium text-gray-600">Negative Reviews</p>
+              <div className="flex items-center space-x-1">
+                <p className="text-sm font-medium text-gray-600">Negative Reviews</p>
+                <div className="relative group/tooltip">
+                  <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
+                  <div className="hidden group-hover/tooltip:block absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap z-10">
+                    Reviews with 1-2 stars needing attention
+                  </div>
+                </div>
+              </div>
               <AlertCircle className="h-5 w-5 text-red-600" />
             </div>
             <p className="text-3xl font-bold text-gray-900">{stats.negative_reviews}</p>
@@ -207,11 +289,51 @@ export default function Reviews() {
         </div>
       )}
 
+      {/* No Reviews Yet - Helpful Tip */}
+      {!loading && platforms.length > 0 && reviews.length === 0 && (
+        <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-6 mb-6">
+          <div className="flex items-start space-x-3">
+            <HelpCircle className="h-6 w-6 text-blue-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Great! Your platforms are set up.</h3>
+              <p className="text-gray-700 mb-4">Now let's add some reviews. You have two options:</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-white rounded-lg p-4 border border-blue-200">
+                  <h4 className="font-medium text-gray-900 mb-2">1️⃣ Try it with sample data</h4>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Generate demo reviews to see how everything works before adding real ones.
+                  </p>
+                  <button
+                    onClick={() => setShowPlatformSettings(true)}
+                    className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    Generate Sample Reviews →
+                  </button>
+                </div>
+                <div className="bg-white rounded-lg p-4 border border-blue-200">
+                  <h4 className="font-medium text-gray-900 mb-2">2️⃣ Add your real reviews</h4>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Copy reviews from your platforms and add them manually. Automatic sync coming soon!
+                  </p>
+                  <button
+                    onClick={() => setShowGettingStarted(true)}
+                    className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    See Step-by-Step Guide →
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Filters */}
-      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6">
-        <div className="flex items-center space-x-4">
-          <Filter className="h-5 w-5 text-gray-500" />
-          <span className="text-sm font-medium text-gray-700">Filters:</span>
+      {platforms.length > 0 && reviews.length > 0 && (
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6">
+          <div className="flex items-center space-x-4">
+            <Filter className="h-5 w-5 text-gray-500" />
+            <span className="text-sm font-medium text-gray-700">Filters:</span>
 
           {/* Platform Filter */}
           <select
@@ -249,21 +371,40 @@ export default function Reviews() {
             <option value="replied">Replied</option>
             <option value="unreplied">Needs Reply</option>
           </select>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Trends Chart */}
-      <div className="mb-6">
-        <ReviewTrends platformId={selectedPlatform !== 'all' ? selectedPlatform : undefined} />
-      </div>
+      {platforms.length > 0 && reviews.length > 0 && (
+        <div className="mb-6">
+          <ReviewTrends platformId={selectedPlatform !== 'all' ? selectedPlatform : undefined} />
+        </div>
+      )}
 
       {/* Reviews List */}
-      <ReviewList
-        reviews={reviews}
-        onReply={handleReplyToReview}
-        onToggleFlag={handleToggleFlag}
-        onMarkAsRead={handleMarkAsRead}
-      />
+      {platforms.length > 0 && reviews.length > 0 && (
+        <ReviewList
+          reviews={reviews}
+          onReply={handleReplyToReview}
+          onToggleFlag={handleToggleFlag}
+          onMarkAsRead={handleMarkAsRead}
+        />
+      )}
+
+      {/* Getting Started Guide */}
+      {showGettingStarted && (
+        <GettingStartedGuide
+          onClose={() => {
+            setShowGettingStarted(false);
+            localStorage.setItem('reviews_guide_dismissed', 'true');
+          }}
+          onOpenSettings={() => {
+            setShowGettingStarted(false);
+            setShowPlatformSettings(true);
+          }}
+        />
+      )}
 
       {/* Platform Settings Modal */}
       {showPlatformSettings && (
